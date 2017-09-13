@@ -5,11 +5,6 @@ import (
 	"io/ioutil"
 )
 
-type AggregateRoot struct {
-	name     string
-	entities []*Entity
-	vos      []*ValueObject
-}
 type Entity struct {
 	name     string
 	entities []*Entity
@@ -20,6 +15,13 @@ type ValueObject struct {
 	name string
 }
 
+func (entity *Entity) ChildrenEntities() []*Entity {
+	return entity.entities
+}
+
+func (entity *Entity) ChildrenValueObjects() []*ValueObject {
+	return entity.vos
+}
 func (entity *Entity) Compare(other *Entity) bool {
 	if len(entity.entities) != len(other.entities) {
 		return false
@@ -47,44 +49,18 @@ func (entity *Entity) Compare(other *Entity) bool {
 	}
 	return true
 }
-func (ar *AggregateRoot) Compare(other *AggregateRoot) bool {
-	if len(ar.entities) != len(other.entities) {
-		return false
-	}
-	if len(ar.vos) != len(other.vos) {
-		return false
-	}
-	em := make(map[string]*Entity)
-	for _, entity := range ar.entities {
-		em[entity.name] = entity
-	}
-	for _, entity := range other.entities {
-		if !em[entity.name].Compare(entity) {
-			return false
-		}
-	}
-	vom := make(map[string]*ValueObject)
-	for _, vo := range ar.vos {
-		vom[vo.name] = vo
-	}
-	for _, vo := range other.vos {
-		if _, ok := vom[vo.name]; !ok {
-			return false
-		}
-	}
-	return true
-}
-func Parse(dotFile string) map[string]*AggregateRoot {
+
+func Parse(dotFile string) map[string]*Entity {
 	fbuf, _ := ioutil.ReadFile(dotFile)
 	g, _ := gographviz.Read(fbuf)
 
 	// fmt.Println(g.Nodes.Nodes[0].Attrs["comment"])
-	ars := make(map[string]*AggregateRoot)
+	ars := make(map[string]*Entity)
 	es := make(map[string]*Entity)
 	vos := make(map[string]*ValueObject)
 	for _, node := range g.Nodes.Nodes {
 		if node.Attrs["comment"] == "AR" {
-			ars[node.Name] = &AggregateRoot{name: node.Name}
+			ars[node.Name] = &Entity{name: node.Name}
 		}
 		if node.Attrs["comment"] == "E" {
 			es[node.Name] = &Entity{name: node.Name}
