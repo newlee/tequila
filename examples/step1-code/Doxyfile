@@ -2183,7 +2183,7 @@ PERL_PATH              = /usr/bin/perl
 # powerful graphs.
 # The default value is: YES.
 
-CLASS_DIAGRAMS         = YES
+CLASS_DIAGRAMS         = NO
 
 # You can define message sequence charts within doxygen comments using the \msc
 # command. Doxygen will then run the mscgen tool (see:
@@ -2350,7 +2350,7 @@ CALLER_GRAPH           = YES
 # The default value is: YES.
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-GRAPHICAL_HIERARCHY    = YES
+GRAPHICAL_HIERARCHY    = NO
 
 # If the DIRECTORY_GRAPH tag is set to YES then doxygen will show the
 # dependencies a directory has on other directories in a graphical way. The

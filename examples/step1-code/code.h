@@ -23,13 +23,7 @@ public:
 	
 };
 
-public class EntityB: public Entity
-{
-public:
-	EntityB();
-	~EntityB();
-	
-};
+
 
 public class ValueObjectC: public ValueObject
 {
@@ -37,6 +31,22 @@ public:
 	ValueObjectC();
 	~ValueObjectC();
 	
+};
+
+public class ValueObjectD: public ValueObject
+{
+public:
+	ValueObjectD();
+	~ValueObjectD();
+	
+};
+
+public class EntityB: public Entity
+{
+public:
+	EntityB();
+	~EntityB();
+	ValueObjectD* vo_d; 
 };
 
 public class AggregateRootA: public AggregateRoot
