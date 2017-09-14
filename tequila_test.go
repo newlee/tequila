@@ -40,7 +40,7 @@ var _ = Describe("Tequila", func() {
 		It("step1", func() {
 
 			codeDir := "examples/step1-code/html"
-			codeArs := ParseCode(codeDir)
+			codeArs := ParseCodeDir(codeDir)
 
 			Expect(len(codeArs)).Should(Equal(1))
 			Expect(len(codeArs["AggregateRootA"].ChildrenEntities())).Should(Equal(1))
@@ -51,7 +51,7 @@ var _ = Describe("Tequila", func() {
 		It("step2", func() {
 
 			codeDir := "examples/step2-code/html"
-			codeArs := ParseCode(codeDir)
+			codeArs := ParseCodeDir(codeDir)
 
 			Expect(len(codeArs)).Should(Equal(2))
 			Expect(len(codeArs["AggregateRootA"].ChildrenEntities())).Should(Equal(1))

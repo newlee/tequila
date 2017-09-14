@@ -9,7 +9,7 @@ func main() {
 	ars := Parse(dotFile)
 
 	codeDir := "examples/step2-code/html"
-	codeArs := ParseCode(codeDir)
+	codeArs := ParseCodeDir(codeDir)
 	for key, _ := range codeArs {
 		ar := codeArs[key]
 		fmt.Println(ar.Compare(ars[key]))
