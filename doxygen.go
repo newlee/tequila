@@ -73,6 +73,9 @@ func ParseCode(codeDir string) map[string]*Entity {
 			for key, _ := range edges {
 				if ar, ok := codeArs[key]; ok {
 					for _, edge := range edges[key] {
+						if ref, ok := codeArs[edge]; ok {
+							ar.Refs = append(ar.Refs, ref)
+						}
 						if et, ok := es[edge]; ok {
 							ar.entities = append(ar.entities, et)
 						}

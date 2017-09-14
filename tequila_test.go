@@ -1,7 +1,6 @@
 package main_test
 
 import (
-	"fmt"
 	. "github.com/newlee/tequila"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -32,7 +31,8 @@ var _ = Describe("Tequila", func() {
 			Expect(len(entityB.ChildrenValueObjects())).Should(Equal(1))
 
 			Expect(len(ars["AggregateRootB"].ChildrenEntities())).Should(Equal(0))
-			fmt.Println(ars["AggregateRootB"])
+			Expect(len(ars["AggregateRootB"].Refs)).Should(Equal(1))
+			Expect(ars["AggregateRootB"].Refs[0]).Should(Equal(ars["AggregateRootA"]))
 		})
 	})
 
@@ -60,7 +60,8 @@ var _ = Describe("Tequila", func() {
 			Expect(len(entityB.ChildrenValueObjects())).Should(Equal(1))
 
 			Expect(len(codeArs["AggregateRootB"].ChildrenEntities())).Should(Equal(0))
-			fmt.Println(codeArs["AggregateRootB"])
+			Expect(len(codeArs["AggregateRootB"].Refs)).Should(Equal(1))
+			Expect(codeArs["AggregateRootB"].Refs[0]).Should(Equal(codeArs["AggregateRootA"]))
 		})
 	})
 })

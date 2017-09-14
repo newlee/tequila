@@ -9,6 +9,7 @@ type Entity struct {
 	name     string
 	entities []*Entity
 	vos      []*ValueObject
+	Refs     []*Entity
 }
 
 type ValueObject struct {
@@ -73,6 +74,9 @@ func Parse(dotFile string) map[string]*Entity {
 	for key, _ := range g.Edges.SrcToDsts {
 		if ar, ok := ars[key]; ok {
 			for ckey, _ := range g.Edges.SrcToDsts[key] {
+				if ref, ok := ars[ckey]; ok {
+					ar.Refs = append(ar.Refs, ref)
+				}
 				if et, ok := es[ckey]; ok {
 					ar.entities = append(ar.entities, et)
 				}
