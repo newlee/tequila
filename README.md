@@ -7,9 +7,15 @@
 * install graphviz(http://graphviz.org/)
 * install doxygen(http://www.stack.nl/~dimitri/doxygen/)
 
+### Example:
+* DDD Model(see examples/step2-problem.dot)
+![](https://rawgit.com/newlee/tequila/master/examples/step2-problem.png)
+
+* Code(see examples/step2-code/code.h)
+* Doxygen File(see examples/step2-code/Doxyfile)
+
 ### Build & Run example:
 * generate doxygen dot files:
-    `doxygen examples/step1-code/Doxyfile`
+    `doxygen examples/step2-code/Doxyfile`
 * build & run example:
     `go build && ./tequila `
-*

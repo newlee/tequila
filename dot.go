@@ -16,6 +16,15 @@ type ValueObject struct {
 	name string
 }
 
+type Repository struct {
+	name string
+	For  *Entity
+}
+type Model struct {
+	ARs   map[string]*Entity
+	Repos map[string]*Repository
+}
+
 func (entity *Entity) ChildrenEntities() []*Entity {
 	return entity.entities
 }
@@ -51,7 +60,32 @@ func (entity *Entity) Compare(other *Entity) bool {
 	return true
 }
 
-func Parse(dotFile string) map[string]*Entity {
+func (repo *Repository) Compare(other *Repository) bool {
+	return repo.For.Compare(other.For)
+}
+
+func (model *Model) Comapre(other *Model) bool {
+	if len(model.ARs) != len(other.ARs) {
+		return false
+	}
+	if len(model.Repos) != len(other.Repos) {
+		return false
+	}
+	for key, _ := range model.ARs {
+		ar := model.ARs[key]
+		if !ar.Compare(other.ARs[key]) {
+			return false
+		}
+	}
+	for key, _ := range model.Repos {
+		repo := model.Repos[key]
+		if !repo.Compare(other.Repos[key]) {
+			return false
+		}
+	}
+	return true
+}
+func Parse(dotFile string) *Model {
 	fbuf, _ := ioutil.ReadFile(dotFile)
 	g, _ := gographviz.Read(fbuf)
 
@@ -59,6 +93,7 @@ func Parse(dotFile string) map[string]*Entity {
 	ars := make(map[string]*Entity)
 	es := make(map[string]*Entity)
 	vos := make(map[string]*ValueObject)
+	repos := make(map[string]*Repository)
 	for _, node := range g.Nodes.Nodes {
 		if node.Attrs["comment"] == "AR" {
 			ars[node.Name] = &Entity{name: node.Name}
@@ -68,6 +103,9 @@ func Parse(dotFile string) map[string]*Entity {
 		}
 		if node.Attrs["comment"] == "VO" {
 			vos[node.Name] = &ValueObject{name: node.Name}
+		}
+		if node.Attrs["comment"] == "Repo" {
+			repos[node.Name] = &Repository{name: node.Name}
 		}
 	}
 
@@ -95,6 +133,11 @@ func Parse(dotFile string) map[string]*Entity {
 				}
 			}
 		}
+		if repo, ok := repos[key]; ok {
+			for ckey, _ := range g.Edges.SrcToDsts[key] {
+				repo.For = ars[ckey]
+			}
+		}
 	}
-	return ars
+	return &Model{ARs: ars, Repos: repos}
 }

@@ -14,6 +14,9 @@ type CodeDotFileParseResult struct {
 	vos   map[string]*ValueObject
 }
 
+var codeArs = make(map[string]*Entity)
+var repos = make(map[string]*Repository)
+
 func (result *CodeDotFileParseResult) parse(edge *gographviz.Edge, nodes map[string]string) {
 	if edge.Attrs["style"] == "\"dashed\"" {
 		if _, ok := result.edges[nodes[edge.Dst]]; !ok {
@@ -30,6 +33,9 @@ func (result *CodeDotFileParseResult) parse(edge *gographviz.Edge, nodes map[str
 			}
 			if nodes[edge.Src] == "ValueObject" {
 				result.vos[nodes[edge.Dst]] = &ValueObject{name: nodes[edge.Dst]}
+			}
+			if nodes[edge.Src] == "Repository" {
+				repos[nodes[edge.Dst]] = &Repository{name: nodes[edge.Dst]}
 			}
 		}
 
@@ -65,8 +71,6 @@ func (result *CodeDotFileParseResult) parseEntity(key string) {
 	}
 }
 
-var codeArs = make(map[string]*Entity)
-
 func codeDotFiles(codeDir string) []string {
 	codeDotFiles := make([]string, 0)
 	filepath.Walk(codeDir, func(path string, fi os.FileInfo, err error) error {
@@ -77,13 +81,30 @@ func codeDotFiles(codeDir string) []string {
 			if strings.Contains(path, "inherit") {
 				return nil
 			}
+			if strings.HasSuffix(path, "_cgraph.dot") {
+				return nil
+			}
 
 			codeDotFiles = append(codeDotFiles, path)
 		}
 
 		return nil
 	})
+
 	return codeDotFiles
+}
+
+func callDotFiles(codeDir string) []string {
+	callDotFiles := make([]string, 0)
+	filepath.Walk(codeDir, func(path string, fi os.FileInfo, err error) error {
+		if strings.HasSuffix(path, "_cgraph.dot") {
+			callDotFiles = append(callDotFiles, path)
+		}
+
+		return nil
+	})
+
+	return callDotFiles
 }
 
 func nodes(g *gographviz.Graph) map[string]string {
@@ -94,7 +115,10 @@ func nodes(g *gographviz.Graph) map[string]string {
 	return nodes
 }
 
-func parseDotFile(g *gographviz.Graph) *CodeDotFileParseResult {
+func parseDotFile(codeDotfile string) *CodeDotFileParseResult {
+	fbuf, _ := ioutil.ReadFile(codeDotfile)
+	g, _ := gographviz.Read(fbuf)
+
 	nodes := nodes(g)
 	result := &CodeDotFileParseResult{
 		edges: make(map[string][]string),
@@ -111,26 +135,44 @@ func parseDotFile(g *gographviz.Graph) *CodeDotFileParseResult {
 	}
 	return result
 }
+
 func parseCode(codeDotfile string) {
-	fbuf, _ := ioutil.ReadFile(codeDotfile)
+	codeDotFileParseResult := parseDotFile(codeDotfile)
 
-	g, _ := gographviz.Read(fbuf)
-
-	codeDotFileParseResult := parseDotFile(g)
-
-	if len(codeArs) > 0 {
-		for key, _ := range codeDotFileParseResult.edges {
-			codeDotFileParseResult.parseAggregateRoot(key)
-			codeDotFileParseResult.parseEntity(key)
-		}
+	for key, _ := range codeDotFileParseResult.edges {
+		codeDotFileParseResult.parseAggregateRoot(key)
+		codeDotFileParseResult.parseEntity(key)
 	}
 }
-func ParseCodeDir(codeDir string) map[string]*Entity {
+func parseCall(codeDotfile string) {
+	fbuf, _ := ioutil.ReadFile(codeDotfile)
+	g, _ := gographviz.Read(fbuf)
+
+	nodes := nodes(g)
+	for key, _ := range nodes {
+		method := nodes[key]
+		nodes[key] = strings.Split(strings.Split(method, "::")[0], "\\l")[0]
+	}
+	for key, _ := range g.Edges.DstToSrcs {
+		for edgesKey, _ := range g.Edges.DstToSrcs[key] {
+			for _, edge := range g.Edges.DstToSrcs[key][edgesKey] {
+				repos[nodes[edge.Src]].For = codeArs[nodes[edge.Dst]]
+			}
+		}
+	}
+
+}
+func ParseCodeDir(codeDir string) *Model {
 	codeDotFiles := codeDotFiles(codeDir)
 
 	for _, codeDotfile := range codeDotFiles {
 		parseCode(codeDotfile)
 	}
 
-	return codeArs
+	callDotFiles := callDotFiles(codeDir)
+	for _, callDotFile := range callDotFiles {
+		parseCall(callDotFile)
+	}
+
+	return &Model{ARs: codeArs, Repos: repos}
 }

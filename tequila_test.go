@@ -11,7 +11,7 @@ var _ = Describe("Tequila", func() {
 		It("step1", func() {
 
 			dotFile := "examples/step1-problem.dot"
-			ars := Parse(dotFile)
+			ars := Parse(dotFile).ARs
 
 			Expect(len(ars)).Should(Equal(1))
 			Expect(len(ars["AggregateRootA"].ChildrenEntities())).Should(Equal(1))
@@ -22,7 +22,7 @@ var _ = Describe("Tequila", func() {
 		It("step2", func() {
 
 			dotFile := "examples/step2-problem.dot"
-			ars := Parse(dotFile)
+			ars := Parse(dotFile).ARs
 
 			Expect(len(ars)).Should(Equal(2))
 			Expect(len(ars["AggregateRootA"].ChildrenEntities())).Should(Equal(1))
@@ -34,13 +34,23 @@ var _ = Describe("Tequila", func() {
 			Expect(len(ars["AggregateRootB"].Refs)).Should(Equal(1))
 			Expect(ars["AggregateRootB"].Refs[0]).Should(Equal(ars["AggregateRootA"]))
 		})
+		It("step2 with repository", func() {
+
+			dotFile := "examples/step2-problem.dot"
+			model := Parse(dotFile)
+			ars := model.ARs
+			repos := model.Repos
+
+			Expect(len(repos)).Should(Equal(1))
+			Expect(repos["AggregateRootARepo"].For).Should(Equal(ars["AggregateRootA"]))
+		})
 	})
 
 	Context("Parse Doxygen dot files", func() {
 		It("step1", func() {
 
 			codeDir := "examples/step1-code/html"
-			codeArs := ParseCodeDir(codeDir)
+			codeArs := ParseCodeDir(codeDir).ARs
 
 			Expect(len(codeArs)).Should(Equal(1))
 			Expect(len(codeArs["AggregateRootA"].ChildrenEntities())).Should(Equal(1))
@@ -51,7 +61,7 @@ var _ = Describe("Tequila", func() {
 		It("step2", func() {
 
 			codeDir := "examples/step2-code/html"
-			codeArs := ParseCodeDir(codeDir)
+			codeArs := ParseCodeDir(codeDir).ARs
 
 			Expect(len(codeArs)).Should(Equal(2))
 			Expect(len(codeArs["AggregateRootA"].ChildrenEntities())).Should(Equal(1))
@@ -62,6 +72,17 @@ var _ = Describe("Tequila", func() {
 			Expect(len(codeArs["AggregateRootB"].ChildrenEntities())).Should(Equal(0))
 			Expect(len(codeArs["AggregateRootB"].Refs)).Should(Equal(1))
 			Expect(codeArs["AggregateRootB"].Refs[0]).Should(Equal(codeArs["AggregateRootA"]))
+		})
+
+		It("step2 with repository", func() {
+
+			codeDir := "examples/step2-code/html"
+			model := ParseCodeDir(codeDir)
+			ars := model.ARs
+			repos := model.Repos
+
+			Expect(len(repos)).Should(Equal(1))
+			Expect(repos["AggregateRootARepo"].For).Should(Equal(ars["AggregateRootA"]))
 		})
 	})
 })

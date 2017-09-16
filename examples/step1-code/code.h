@@ -1,60 +1,60 @@
-public class Entity
+class Entity
 {
 public:
-	Entity();
-	~Entity();
+	Entity(){};
+	~Entity(){};
 	int Id;
 };
 
-public class AggregateRoot: public Entity
+class AggregateRoot: public Entity
 {
 public:
-	AggregateRoot();
-	~AggregateRoot();
-	
+	AggregateRoot(){};
+	~AggregateRoot(){};
+	void Init(){
+		
+	}
 };
 
 
-public class ValueObject
+class ValueObject
 {
 public:
-	ValueObject();
-	~ValueObject();
+	ValueObject(){};
+	~ValueObject(){};
 	
 };
 
-
-
-public class ValueObjectC: public ValueObject
+class ValueObjectC: public ValueObject
 {
 public:
-	ValueObjectC();
-	~ValueObjectC();
+	ValueObjectC(){};
+	~ValueObjectC(){};
 	
 };
 
-public class ValueObjectD: public ValueObject
+class ValueObjectD: public ValueObject
 {
 public:
-	ValueObjectD();
-	~ValueObjectD();
+	ValueObjectD(){};
+	~ValueObjectD(){};
 	
 };
 
-public class EntityB: public Entity
+class EntityB: public Entity
 {
 public:
-	EntityB();
-	~EntityB();
+	EntityB(){};
+	~EntityB(){};
 	ValueObjectD* vo_d; 
+
 };
 
-public class AggregateRootA: public AggregateRoot
+class AggregateRootA: public AggregateRoot
 {
 public:
-	AggregateRootA();
-	~AggregateRootA();
+	AggregateRootA(){};
+	~AggregateRootA(){};
 	EntityB* entity_b;
 	ValueObjectC* vo_c; 
 };
-

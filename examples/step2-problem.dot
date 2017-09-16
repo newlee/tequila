@@ -6,8 +6,10 @@ digraph g {
 	EntityB[label="EntityB\l<E>", comment=E, shape=box]
 	ValueObjectC[label="ValueObjectC\l<VO>", comment=VO, shape=box, color=lightblue]
 	ValueObjectD[label="ValueObjectD\l<VO>", comment=VO, shape=box, color=lightblue]
+	AggregateRootARepo[label="AggregateRootARepo", comment=Repo, shape=box, color=yellow]
 	AggregateRootA -> EntityB
 	AggregateRootA -> ValueObjectC
 	EntityB -> ValueObjectD
-	AggregateRootB -> AggregateRootA
+	AggregateRootB -> AggregateRootA[style="dashed"]
+	AggregateRootARepo -> AggregateRootA[style="dashed"]
 }
