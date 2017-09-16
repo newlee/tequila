@@ -12,7 +12,7 @@
 
 ![](https://rawgit.com/newlee/tequila/master/examples/step2-problem.png)
 
-* Code(see examples/step2-code/code.h)
+* ![Code](/blob/master/examples/step2-code/code.h)
 * Doxygen File(see examples/step2-code/Doxyfile)
 
 ### Build & Run example:
