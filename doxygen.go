@@ -18,28 +18,36 @@ var codeArs = make(map[string]*Entity)
 var repos = make(map[string]*Repository)
 var providers = make(map[string]*Provider)
 
+func isAggregateRoot(className string) bool {
+	tmp := strings.Split(className, "::")
+	return tmp[len(tmp)-1] == "AggregateRoot"
+}
 func (result *CodeDotFileParseResult) parse(edge *gographviz.Edge, nodes map[string]string) {
+	tmp := strings.Split(nodes[edge.Dst], "::")
+	dst := strings.Replace(tmp[len(tmp)-1], "\\l", "", -1)
+	tmp = strings.Split(nodes[edge.Src], "::")
+	src := strings.Replace(tmp[len(tmp)-1], "\\l", "", -1)
 	if edge.Attrs["style"] == "\"dashed\"" {
-		if _, ok := result.edges[nodes[edge.Dst]]; !ok {
-			result.edges[nodes[edge.Dst]] = make([]string, 0)
+		if _, ok := result.edges[dst]; !ok {
+			result.edges[dst] = make([]string, 0)
 		}
-		result.edges[nodes[edge.Dst]] = append(result.edges[nodes[edge.Dst]], nodes[edge.Src])
+		result.edges[dst] = append(result.edges[dst], src)
 	} else {
-		if nodes[edge.Dst] != "AggregateRoot" {
-			if nodes[edge.Src] == "AggregateRoot" {
-				codeArs[nodes[edge.Dst]] = &Entity{name: nodes[edge.Dst]}
+		if !isAggregateRoot(dst) {
+			if strings.HasSuffix(src, "AggregateRoot") {
+				codeArs[dst] = &Entity{name: dst}
 			}
-			if nodes[edge.Src] == "Entity" {
-				result.es[nodes[edge.Dst]] = &Entity{name: nodes[edge.Dst]}
+			if strings.HasSuffix(src, "Entity") {
+				result.es[dst] = &Entity{name: dst}
 			}
-			if nodes[edge.Src] == "ValueObject" {
-				result.vos[nodes[edge.Dst]] = &ValueObject{name: nodes[edge.Dst]}
+			if strings.HasSuffix(src, "ValueObject") {
+				result.vos[dst] = &ValueObject{name: dst}
 			}
-			if nodes[edge.Src] == "Repository" {
-				repos[nodes[edge.Dst]] = &Repository{name: nodes[edge.Dst]}
+			if strings.HasSuffix(src, "Repository") {
+				repos[dst] = &Repository{name: dst}
 			}
-			if nodes[edge.Src] == "Provider" {
-				providers[nodes[edge.Dst]] = &Provider{name: nodes[edge.Dst]}
+			if strings.HasSuffix(src, "Provider") {
+				providers[dst] = &Provider{name: dst}
 			}
 		}
 
@@ -79,7 +87,7 @@ func codeDotFiles(codeDir string) []string {
 	codeDotFiles := make([]string, 0)
 	filepath.Walk(codeDir, func(path string, fi os.FileInfo, err error) error {
 		if strings.HasSuffix(path, ".dot") {
-			if strings.HasSuffix(path, "class_aggregate_root__coll__graph.dot") {
+			if strings.HasSuffix(path, "class_domain_1_1_aggregate_root__coll__graph.dot") {
 				return nil
 			}
 			if strings.Contains(path, "inherit") {
@@ -154,14 +162,21 @@ func parseCall(codeDotfile string) {
 
 	nodes := nodes(g)
 	for key, _ := range nodes {
-		method := nodes[key]
-		nodes[key] = strings.Split(strings.Split(method, "::")[0], "\\l")[0]
+		fullMethodName := nodes[key]
+
+		tmp := strings.Split(fullMethodName, "::")
+		methodName := tmp[len(tmp)-2]
+		nodes[key] = strings.Replace(methodName, "\\l", "", -1) //, "\\l", "", -1)
 	}
 	for key, _ := range g.Edges.DstToSrcs {
 		for edgesKey, _ := range g.Edges.DstToSrcs[key] {
 			for _, edge := range g.Edges.DstToSrcs[key][edgesKey] {
-				if repo, ok := repos[nodes[edge.Src]]; ok {
-					repo.For = codeArs[nodes[edge.Dst]]
+
+				dst := nodes[edge.Dst]
+				src := nodes[edge.Src]
+
+				if repo, ok := repos[src]; ok {
+					repo.For = codeArs[dst]
 
 				}
 			}
@@ -171,6 +186,9 @@ func parseCall(codeDotfile string) {
 }
 func ParseCodeDir(codeDir string) *Model {
 	codeDotFiles := codeDotFiles(codeDir)
+	codeArs = make(map[string]*Entity)
+	repos = make(map[string]*Repository)
+	providers = make(map[string]*Provider)
 
 	for _, codeDotfile := range codeDotFiles {
 		parseCode(codeDotfile)

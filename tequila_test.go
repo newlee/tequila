@@ -55,6 +55,7 @@ var _ = Describe("Tequila", func() {
 	})
 
 	Context("Parse Doxygen dot files", func() {
+
 		It("step1", func() {
 
 			codeDir := "examples/step1-code/html"
@@ -72,14 +73,16 @@ var _ = Describe("Tequila", func() {
 			codeArs := ParseCodeDir(codeDir).ARs
 
 			Expect(len(codeArs)).Should(Equal(2))
-			Expect(len(codeArs["AggregateRootA"].ChildrenEntities())).Should(Equal(1))
-			Expect(len(codeArs["AggregateRootA"].ChildrenValueObjects())).Should(Equal(1))
-			entityB := codeArs["AggregateRootA"].ChildrenEntities()[0]
+			ara := "AggregateRootA"
+			arb := "AggregateRootB"
+			Expect(len(codeArs[ara].ChildrenEntities())).Should(Equal(1))
+			Expect(len(codeArs[ara].ChildrenValueObjects())).Should(Equal(1))
+			entityB := codeArs[ara].ChildrenEntities()[0]
 			Expect(len(entityB.ChildrenValueObjects())).Should(Equal(1))
 
-			Expect(len(codeArs["AggregateRootB"].ChildrenEntities())).Should(Equal(0))
-			Expect(len(codeArs["AggregateRootB"].Refs)).Should(Equal(1))
-			Expect(codeArs["AggregateRootB"].Refs[0]).Should(Equal(codeArs["AggregateRootA"]))
+			Expect(len(codeArs[arb].ChildrenEntities())).Should(Equal(0))
+			Expect(len(codeArs[arb].Refs)).Should(Equal(1))
+			Expect(codeArs[arb].Refs[0]).Should(Equal(codeArs[ara]))
 		})
 
 		It("step2 with repository", func() {

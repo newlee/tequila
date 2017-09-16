@@ -1,5 +1,6 @@
 #include <iostream>
 
+namespace Domain {
 class Entity
 {
 public:
@@ -73,6 +74,11 @@ public:
 	AggregateRootA* a;
 };
 
+}
+
+namespace Repositories {
+using namespace Domain;
+
 class Repository{
 };
 
@@ -87,6 +93,10 @@ public:
 	};
 };
 
+}
+
+namespace Gateways {
+using namespace Domain;
 
 class FakeRouter: public Router
 {
@@ -98,3 +108,5 @@ public:
 		return 1;
 	}
 };
+
+}

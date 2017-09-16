@@ -1,5 +1,8 @@
 #include "code.h"
 
+using namespace Gateways;
+using namespace Repositories;
+
 int main(int argc, char const *argv[])
 {
 	// routerFactory.setRouter(new FakeRouter());
