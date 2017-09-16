@@ -8,12 +8,12 @@
 * install doxygen(http://www.stack.nl/~dimitri/doxygen/)
 
 ### Example:
-* DDD Model(![dot file](https://github.com/newlee/tequila/blob/master/examples/step2-problem.dot))
+* DDD Model(![dot file](/examples/step2-problem.dot))
 
 ![](https://rawgit.com/newlee/tequila/master/examples/step2-problem.png)
 
-* ![Code](/blob/master/examples/step2-code/code.h)
-* Doxygen File(see examples/step2-code/Doxyfile)
+* ![Code](/examples/step2-code/code.h)
+* ![Doxygen File](/examples/step2-code/Doxyfile)
 
 ### Build & Run example:
 * generate doxygen dot files:
