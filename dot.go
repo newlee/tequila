@@ -20,9 +20,13 @@ type Repository struct {
 	name string
 	For  *Entity
 }
+type Provider struct {
+	name string
+}
 type Model struct {
-	ARs   map[string]*Entity
-	Repos map[string]*Repository
+	ARs       map[string]*Entity
+	Repos     map[string]*Repository
+	Providers map[string]*Provider
 }
 
 func (entity *Entity) ChildrenEntities() []*Entity {
@@ -94,6 +98,8 @@ func Parse(dotFile string) *Model {
 	es := make(map[string]*Entity)
 	vos := make(map[string]*ValueObject)
 	repos := make(map[string]*Repository)
+	providers := make(map[string]*Provider)
+
 	for _, node := range g.Nodes.Nodes {
 		if node.Attrs["comment"] == "AR" {
 			ars[node.Name] = &Entity{name: node.Name}
@@ -106,6 +112,9 @@ func Parse(dotFile string) *Model {
 		}
 		if node.Attrs["comment"] == "Repo" {
 			repos[node.Name] = &Repository{name: node.Name}
+		}
+		if node.Attrs["comment"] == "Provider" {
+			providers[node.Name] = &Provider{name: node.Name}
 		}
 	}
 
@@ -139,5 +148,6 @@ func Parse(dotFile string) *Model {
 			}
 		}
 	}
-	return &Model{ARs: ars, Repos: repos}
+
+	return &Model{ARs: ars, Repos: repos, Providers: providers}
 }

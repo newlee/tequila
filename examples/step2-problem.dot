@@ -7,6 +7,7 @@ digraph g {
 	ValueObjectC[label="ValueObjectC\l<VO>", comment=VO, shape=box, color=lightblue]
 	ValueObjectD[label="ValueObjectD\l<VO>", comment=VO, shape=box, color=lightblue]
 	AggregateRootARepo[label="AggregateRootARepo", comment=Repo, shape=box, color=yellow]
+	Router[label="Router", comment=Provider, shape=box, color=purple]
 	AggregateRootA -> EntityB
 	AggregateRootA -> ValueObjectC
 	EntityB -> ValueObjectD

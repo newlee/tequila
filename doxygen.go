@@ -16,6 +16,7 @@ type CodeDotFileParseResult struct {
 
 var codeArs = make(map[string]*Entity)
 var repos = make(map[string]*Repository)
+var providers = make(map[string]*Provider)
 
 func (result *CodeDotFileParseResult) parse(edge *gographviz.Edge, nodes map[string]string) {
 	if edge.Attrs["style"] == "\"dashed\"" {
@@ -36,6 +37,9 @@ func (result *CodeDotFileParseResult) parse(edge *gographviz.Edge, nodes map[str
 			}
 			if nodes[edge.Src] == "Repository" {
 				repos[nodes[edge.Dst]] = &Repository{name: nodes[edge.Dst]}
+			}
+			if nodes[edge.Src] == "Provider" {
+				providers[nodes[edge.Dst]] = &Provider{name: nodes[edge.Dst]}
 			}
 		}
 
@@ -156,7 +160,10 @@ func parseCall(codeDotfile string) {
 	for key, _ := range g.Edges.DstToSrcs {
 		for edgesKey, _ := range g.Edges.DstToSrcs[key] {
 			for _, edge := range g.Edges.DstToSrcs[key][edgesKey] {
-				repos[nodes[edge.Src]].For = codeArs[nodes[edge.Dst]]
+				if repo, ok := repos[nodes[edge.Src]]; ok {
+					repo.For = codeArs[nodes[edge.Dst]]
+
+				}
 			}
 		}
 	}
@@ -174,5 +181,5 @@ func ParseCodeDir(codeDir string) *Model {
 		parseCall(callDotFile)
 	}
 
-	return &Model{ARs: codeArs, Repos: repos}
+	return &Model{ARs: codeArs, Repos: repos, Providers: providers}
 }

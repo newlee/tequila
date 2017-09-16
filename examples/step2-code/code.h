@@ -1,26 +1,32 @@
+#include <iostream>
+
 class Entity
 {
 public:
-	Entity(){};
-	~Entity(){};
 	int Id;
 };
 
 class AggregateRoot: public Entity
 {
-public:
-	AggregateRoot(){};
-	~AggregateRoot(){};
 };
 
 
 class ValueObject
 {
-public:
-	ValueObject(){};
-	~ValueObject(){};
-	
 };
+
+class Provider
+{
+
+};
+
+class Router: public Provider
+{
+public:
+	virtual int Selete() = 0;
+};
+
+static Router* router;
 
 class ValueObjectC: public ValueObject
 {
@@ -54,7 +60,9 @@ public:
 	~AggregateRootA(){};
 	EntityB* entity_b;
 	ValueObjectC* vo_c; 
-	void Init(){}
+	void Init(){
+		router->Selete();
+	};
 };
 
 class AggregateRootB: public AggregateRoot
@@ -65,11 +73,7 @@ public:
 	AggregateRootA* a;
 };
 
-class Repository
-{
-public:
-	Repository();
-	~Repository();
+class Repository{
 };
 
 class AggregateRootARepo: public Repository
@@ -79,5 +83,18 @@ public:
 	~AggregateRootARepo(){};
 	void Save(AggregateRootA *a){
 		a->Init();
+		std::cout << "saved" << "\n";
 	};
+};
+
+
+class FakeRouter: public Router
+{
+public:
+	FakeRouter(){};
+	~FakeRouter(){};
+	int Selete(){
+		std::cout << "routed" << "\n";
+		return 1;
+	}
 };

@@ -44,6 +44,14 @@ var _ = Describe("Tequila", func() {
 			Expect(len(repos)).Should(Equal(1))
 			Expect(repos["AggregateRootARepo"].For).Should(Equal(ars["AggregateRootA"]))
 		})
+		It("step2 with provider interface", func() {
+
+			dotFile := "examples/step2-problem.dot"
+			model := Parse(dotFile)
+			providers := model.Providers
+
+			Expect(len(providers)).Should(Equal(1))
+		})
 	})
 
 	Context("Parse Doxygen dot files", func() {
@@ -83,6 +91,14 @@ var _ = Describe("Tequila", func() {
 
 			Expect(len(repos)).Should(Equal(1))
 			Expect(repos["AggregateRootARepo"].For).Should(Equal(ars["AggregateRootA"]))
+		})
+
+		It("step2 with provider interface", func() {
+			codeDir := "examples/step2-code/html"
+			model := ParseCodeDir(codeDir)
+			providers := model.Providers
+
+			Expect(len(providers)).Should(Equal(1))
 		})
 	})
 })
