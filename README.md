@@ -8,7 +8,8 @@
 * install doxygen(http://www.stack.nl/~dimitri/doxygen/)
 
 ### Example:
-* DDD Model(see examples/step2-problem.dot)
+* DDD Model(![dot file](https://github.com/newlee/tequila/blob/master/examples/step2-problem.dot))
+
 ![](https://rawgit.com/newlee/tequila/master/examples/step2-problem.png)
 
 * Code(see examples/step2-code/code.h)
