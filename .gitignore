@@ -17,3 +17,5 @@ html/
 tequila
 
 *.gch
+
+.idea

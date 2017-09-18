@@ -68,20 +68,20 @@ func (repo *Repository) Compare(other *Repository) bool {
 	return repo.For.Compare(other.For)
 }
 
-func (model *Model) Comapre(other *Model) bool {
+func (model *Model) Compare(other *Model) bool {
 	if len(model.ARs) != len(other.ARs) {
 		return false
 	}
 	if len(model.Repos) != len(other.Repos) {
 		return false
 	}
-	for key, _ := range model.ARs {
+	for key := range model.ARs {
 		ar := model.ARs[key]
 		if !ar.Compare(other.ARs[key]) {
 			return false
 		}
 	}
-	for key, _ := range model.Repos {
+	for key := range model.Repos {
 		repo := model.Repos[key]
 		if !repo.Compare(other.Repos[key]) {
 			return false
@@ -118,9 +118,9 @@ func Parse(dotFile string) *Model {
 		}
 	}
 
-	for key, _ := range g.Edges.SrcToDsts {
+	for key := range g.Edges.SrcToDsts {
 		if ar, ok := ars[key]; ok {
-			for ckey, _ := range g.Edges.SrcToDsts[key] {
+			for ckey := range g.Edges.SrcToDsts[key] {
 				if ref, ok := ars[ckey]; ok {
 					ar.Refs = append(ar.Refs, ref)
 				}
@@ -133,7 +133,7 @@ func Parse(dotFile string) *Model {
 			}
 		}
 		if entity, ok := es[key]; ok {
-			for ckey, _ := range g.Edges.SrcToDsts[key] {
+			for ckey := range g.Edges.SrcToDsts[key] {
 				if et, ok := es[ckey]; ok {
 					entity.entities = append(entity.entities, et)
 				}
@@ -143,7 +143,7 @@ func Parse(dotFile string) *Model {
 			}
 		}
 		if repo, ok := repos[key]; ok {
-			for ckey, _ := range g.Edges.SrcToDsts[key] {
+			for ckey := range g.Edges.SrcToDsts[key] {
 				repo.For = ars[ckey]
 			}
 		}

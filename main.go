@@ -10,5 +10,5 @@ func main() {
 
 	codeDir := "examples/step2-code/html"
 	codeModel := ParseCodeDir(codeDir)
-	fmt.Println(dddModel.Comapre(codeModel))
+	fmt.Println(dddModel.Compare(codeModel))
 }

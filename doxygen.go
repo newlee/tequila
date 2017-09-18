@@ -138,8 +138,8 @@ func parseDotFile(codeDotfile string) *CodeDotFileParseResult {
 		vos:   make(map[string]*ValueObject),
 	}
 
-	for key, _ := range g.Edges.DstToSrcs {
-		for edgesKey, _ := range g.Edges.DstToSrcs[key] {
+	for key := range g.Edges.DstToSrcs {
+		for edgesKey := range g.Edges.DstToSrcs[key] {
 			for _, edge := range g.Edges.DstToSrcs[key][edgesKey] {
 				result.parse(edge, nodes)
 			}
@@ -151,7 +151,7 @@ func parseDotFile(codeDotfile string) *CodeDotFileParseResult {
 func parseCode(codeDotfile string) {
 	codeDotFileParseResult := parseDotFile(codeDotfile)
 
-	for key, _ := range codeDotFileParseResult.edges {
+	for key := range codeDotFileParseResult.edges {
 		codeDotFileParseResult.parseAggregateRoot(key)
 		codeDotFileParseResult.parseEntity(key)
 	}
@@ -161,15 +161,15 @@ func parseCall(codeDotfile string) {
 	g, _ := gographviz.Read(fbuf)
 
 	nodes := nodes(g)
-	for key, _ := range nodes {
+	for key := range nodes {
 		fullMethodName := nodes[key]
 
 		tmp := strings.Split(fullMethodName, "::")
 		methodName := tmp[len(tmp)-2]
 		nodes[key] = strings.Replace(methodName, "\\l", "", -1) //, "\\l", "", -1)
 	}
-	for key, _ := range g.Edges.DstToSrcs {
-		for edgesKey, _ := range g.Edges.DstToSrcs[key] {
+	for key := range g.Edges.DstToSrcs {
+		for edgesKey := range g.Edges.DstToSrcs[key] {
 			for _, edge := range g.Edges.DstToSrcs[key][edgesKey] {
 
 				dst := nodes[edge.Dst]
