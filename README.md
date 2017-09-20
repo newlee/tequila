@@ -15,8 +15,14 @@
 * ![Code](/examples/step2-code/code.h)
 * ![Doxygen File](/examples/step2-code/Doxyfile)
 
-### Build & Run example:
+### Build & Run Cpp example:
 * generate doxygen dot files:
     `doxygen examples/step2-code/Doxyfile`
+* build & run example:
+    `go build && ./tequila `
+
+### Build & Run Java example:
+* generate doxygen dot files:
+    `doxygen examples/step2-Java/Doxyfile`
 * build & run example:
     `go build && ./tequila `
