@@ -21,3 +21,5 @@ tequila
 *.gch
 
 .idea
+
+.DS_Store
