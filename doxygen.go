@@ -156,7 +156,23 @@ func parseCode(codeDotfile string) {
 		codeDotFileParseResult.parseEntity(key)
 	}
 }
+
+func doCallRelation(src string, dst string) {
+	for arKey, _ := range codeArs {
+		if srcEntity, ok := codeArs[arKey].findEntity(src); ok {
+			for arKey2, _ := range codeArs {
+				if arKey != arKey2 {
+					if dstEntity, ok := codeArs[arKey2].findEntity(dst); ok {
+						srcEntity.callEntities = append(srcEntity.callEntities, dstEntity)
+					}
+				}
+			}
+		}
+	}
+}
+
 func parseCall(codeDotfile string) {
+
 	fbuf, _ := ioutil.ReadFile(codeDotfile)
 	g, _ := gographviz.Read(fbuf)
 
@@ -178,6 +194,8 @@ func parseCall(codeDotfile string) {
 				if repo, ok := repos[src]; ok {
 					repo.For = codeArs[dst]
 
+				} else {
+					doCallRelation(src, dst)
 				}
 			}
 		}
@@ -193,7 +211,6 @@ func ParseCodeDir(codeDir string) *Model {
 	for _, codeDotfile := range codeDotFiles {
 		parseCode(codeDotfile)
 	}
-
 	callDotFiles := callDotFiles(codeDir)
 	for _, callDotFile := range callDotFiles {
 		parseCall(callDotFile)

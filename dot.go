@@ -6,10 +6,11 @@ import (
 )
 
 type Entity struct {
-	name     string
-	entities []*Entity
-	vos      []*ValueObject
-	Refs     []*Entity
+	name         string
+	entities     []*Entity
+	vos          []*ValueObject
+	Refs         []*Entity
+	callEntities []*Entity
 }
 
 type ValueObject struct {
@@ -27,6 +28,31 @@ type Model struct {
 	ARs       map[string]*Entity
 	Repos     map[string]*Repository
 	Providers map[string]*Provider
+}
+
+func (model *Model) Validate() bool {
+	for key := range model.ARs {
+		ar := model.ARs[key]
+		for _, cEntity := range ar.callEntities {
+			if _, ok := model.ARs[cEntity.name]; !ok {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func (entity *Entity) findEntity(name string) (*Entity, bool) {
+	if entity.name == name {
+		return entity, true
+	} else {
+		for _, et := range entity.entities {
+			if finded, ok := et.findEntity(name); ok {
+				return finded, true
+			}
+		}
+	}
+	return nil, false
 }
 
 func (entity *Entity) ChildrenEntities() []*Entity {

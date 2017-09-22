@@ -103,5 +103,16 @@ var _ = Describe("Tequila", func() {
 
 			Expect(len(providers)).Should(Equal(1))
 		})
+		It("step3 should failded when aggregate ref another entity", func() {
+			codeDir := "examples/step2-code/html"
+			model := ParseCodeDir(codeDir)
+
+			Expect(model.Validate()).Should(Equal(true))
+
+			codeDir = "examples/step3-code/html"
+			model = ParseCodeDir(codeDir)
+
+			Expect(model.Validate()).Should(Equal(false))
+		})
 	})
 })
