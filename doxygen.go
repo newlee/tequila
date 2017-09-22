@@ -23,9 +23,19 @@ func isAggregateRoot(className string) bool {
 	return tmp[len(tmp)-1] == "AggregateRoot"
 }
 func (result *CodeDotFileParseResult) parse(edge *gographviz.Edge, nodes map[string]string) {
-	tmp := strings.Split(nodes[edge.Dst], "::")
+	tmp := make([]string, 0)
+	if strings.Contains(nodes[edge.Dst], "::") {
+		tmp = strings.Split(nodes[edge.Dst], "::")
+	} else {
+		tmp = strings.Split(nodes[edge.Dst], ".")
+	}
+
 	dst := strings.Replace(tmp[len(tmp)-1], "\\l", "", -1)
-	tmp = strings.Split(nodes[edge.Src], "::")
+	if strings.Contains(nodes[edge.Src], "::") {
+		tmp = strings.Split(nodes[edge.Src], "::")
+	} else {
+		tmp = strings.Split(nodes[edge.Src], ".")
+	}
 	src := strings.Replace(tmp[len(tmp)-1], "\\l", "", -1)
 	if edge.Attrs["style"] == "\"dashed\"" {
 		if _, ok := result.edges[dst]; !ok {
@@ -179,10 +189,16 @@ func parseCall(codeDotfile string) {
 	nodes := nodes(g)
 	for key := range nodes {
 		fullMethodName := nodes[key]
+		if strings.Contains(fullMethodName, "::") {
+			tmp := strings.Split(fullMethodName, "::")
+			methodName := tmp[len(tmp)-2]
+			nodes[key] = strings.Replace(methodName, "\\l", "", -1) //, "\\l", "", -1)
+		} else {
+			tmp := strings.Split(fullMethodName, ".")
+			methodName := tmp[len(tmp)-2]
+			nodes[key] = strings.Replace(methodName, "\\l", "", -1) //, "\\l", "", -1)
+		}
 
-		tmp := strings.Split(fullMethodName, "::")
-		methodName := tmp[len(tmp)-2]
-		nodes[key] = strings.Replace(methodName, "\\l", "", -1) //, "\\l", "", -1)
 	}
 	for key := range g.Edges.DstToSrcs {
 		for edgesKey := range g.Edges.DstToSrcs[key] {
