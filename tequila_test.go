@@ -58,6 +58,34 @@ var _ = Describe("Tequila", func() {
 
 			Expect(len(providers)).Should(Equal(1))
 		})
+
+		It("sub domain", func() {
+			dotFile := "examples/subdomain.dot"
+			model := Parse(dotFile)
+
+			Expect(len(model.SubDomains)).Should(Equal(2))
+			subDomain := model.SubDomains["subdomain1"]
+			ars := subDomain.ARs
+			aggregateA := ars[aggregateAName]
+			Expect(len(aggregateA.ChildrenEntities())).Should(Equal(1))
+			Expect(len(aggregateA.ChildrenValueObjects())).Should(Equal(1))
+			entityB := aggregateA.ChildrenEntities()[0]
+			Expect(len(entityB.ChildrenValueObjects())).Should(Equal(1))
+
+			aggregateB := ars[aggregateBName]
+			Expect(len(aggregateB.ChildrenEntities())).Should(Equal(0))
+			Expect(len(aggregateB.Refs)).Should(Equal(1))
+			Expect(aggregateB.Refs[0]).Should(Equal(aggregateA))
+
+			subDomain = model.SubDomains["subdomain2"]
+			ars = subDomain.ARs
+			aggregateC := ars["AggregateRootC"]
+			Expect(len(aggregateC.ChildrenEntities())).Should(Equal(1))
+			Expect(len(aggregateC.ChildrenValueObjects())).Should(Equal(0))
+			EntityC := aggregateC.ChildrenEntities()[0]
+			Expect(len(EntityC.ChildrenValueObjects())).Should(Equal(0))
+
+		})
 	})
 
 	Context("Parse Doxygen dot files", func() {

@@ -28,10 +28,13 @@ type SubDomain struct {
 	ARs       map[string]*Entity
 	Repos     map[string]*Repository
 	Providers map[string]*Provider
+	es        map[string]*Entity
+	vos       map[string]*ValueObject
 }
-type Model	struct {
+type Model struct {
 	SubDomains map[string]*SubDomain
 }
+
 func (subDomain *SubDomain) Validate() bool {
 	for key := range subDomain.ARs {
 		ar := subDomain.ARs[key]
@@ -46,9 +49,9 @@ func (subDomain *SubDomain) Validate() bool {
 
 func (model *Model) Validate() bool {
 	for key := range model.SubDomains {
-		 if !model.SubDomains[key].Validate() {
-		 	return false
-		 }
+		if !model.SubDomains[key].Validate() {
+			return false
+		}
 	}
 	return true
 }
@@ -126,6 +129,14 @@ func (subDomain *SubDomain) Compare(other *SubDomain) bool {
 	}
 	return true
 }
+func createSubDomain() *SubDomain {
+	ars := make(map[string]*Entity)
+	es := make(map[string]*Entity)
+	vos := make(map[string]*ValueObject)
+	repos := make(map[string]*Repository)
+	providers := make(map[string]*Provider)
+	return &SubDomain{ARs: ars, Repos: repos, Providers: providers, es: es, vos: vos}
+}
 func (model *Model) Compare(other *Model) bool {
 	if len(model.SubDomains) != len(model.SubDomains) {
 		return false
@@ -145,31 +156,52 @@ func Parse(dotFile string) *Model {
 	g, _ := gographviz.Read(fbuf)
 
 	// fmt.Println(g.Nodes.Nodes[0].Attrs["comment"])
-	ars := make(map[string]*Entity)
-	es := make(map[string]*Entity)
-	vos := make(map[string]*ValueObject)
-	repos := make(map[string]*Repository)
-	providers := make(map[string]*Provider)
+
+	c2pMap := make(map[string]string)
+	p2c := g.Relations.ParentToChildren
+
+	subDomains := make(map[string]*SubDomain)
+
+	if _, ok := p2c["g"]; ok {
+		for key := range p2c["g"] {
+			c2pMap[key] = "subdomain"
+		}
+		subDomains["subdomain"] = createSubDomain()
+	} else {
+		for clusterKey := range p2c {
+			subDomainName := g.SubGraphs.SubGraphs[clusterKey].Attrs["label"]
+			for key := range p2c[clusterKey] {
+				c2pMap[key] =subDomainName
+			}
+			subDomains[subDomainName] = createSubDomain()
+		}
+	}
 
 	for _, node := range g.Nodes.Nodes {
+		subDomain := subDomains[c2pMap[node.Name]]
 		if node.Attrs["comment"] == "AR" {
-			ars[node.Name] = &Entity{name: node.Name}
+			subDomain.ARs[node.Name] = &Entity{name: node.Name}
 		}
 		if node.Attrs["comment"] == "E" {
-			es[node.Name] = &Entity{name: node.Name}
+			subDomain.es[node.Name] = &Entity{name: node.Name}
 		}
 		if node.Attrs["comment"] == "VO" {
-			vos[node.Name] = &ValueObject{name: node.Name}
+			subDomain.vos[node.Name] = &ValueObject{name: node.Name}
 		}
 		if node.Attrs["comment"] == "Repo" {
-			repos[node.Name] = &Repository{name: node.Name}
+			subDomain.Repos[node.Name] = &Repository{name: node.Name}
 		}
 		if node.Attrs["comment"] == "Provider" {
-			providers[node.Name] = &Provider{name: node.Name}
+			subDomain.Providers[node.Name] = &Provider{name: node.Name}
 		}
 	}
 
 	for key := range g.Edges.SrcToDsts {
+		subDomain := subDomains[c2pMap[key]]
+		ars := subDomain.ARs
+		es := subDomain.es
+		vos := subDomain.vos
+		repos := subDomain.Repos
 		if ar, ok := ars[key]; ok {
 			for ckey := range g.Edges.SrcToDsts[key] {
 				if ref, ok := ars[ckey]; ok {
@@ -183,6 +215,7 @@ func Parse(dotFile string) *Model {
 				}
 			}
 		}
+
 		if entity, ok := es[key]; ok {
 			for ckey := range g.Edges.SrcToDsts[key] {
 				if et, ok := es[ckey]; ok {
@@ -200,8 +233,5 @@ func Parse(dotFile string) *Model {
 		}
 	}
 
-	subDomain := &SubDomain{ARs: ars, Repos: repos, Providers: providers}
-	subDomains := make(map[string]*SubDomain)
-	subDomains["subdomain"] = subDomain;
-	return &Model{SubDomains:subDomains}
+	return &Model{SubDomains: subDomains}
 }

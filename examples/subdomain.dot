@@ -2,7 +2,7 @@ digraph g {
 	node[style = filled, color = orange];
 
 	subgraph cluster1 {
-		label="subdomain1"
+		label=subdomain1
 		AggregateRootA[label="AggregateRootA\l<AR>", comment=AR, shape=box]
 		AggregateRootB[label="AggregateRootB\l<AR>", comment=AR, shape=box]
 		EntityB[label="EntityB\l<E>", comment=E, shape=box]
@@ -17,9 +17,9 @@ digraph g {
 		AggregateRootARepo -> AggregateRootA[style="dashed"]
 	}
 	subgraph cluster2 {
-		label="subdomain2"
-		AggregateRootA[label="AggregateRootA\l<AR>", comment=AR, shape=box]
-		EntityB[label="EntityB\l<E>", comment=E, shape=box]
-		AggregateRootA -> EntityB
+		label=subdomain2
+		AggregateRootC[label="AggregateRootA\l<AR>", comment=AR, shape=box]
+		EntityC[label="EntityB\l<E>", comment=E, shape=box]
+		AggregateRootC -> EntityC
 	}
 }
