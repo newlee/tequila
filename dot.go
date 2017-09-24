@@ -24,20 +24,31 @@ type Repository struct {
 type Provider struct {
 	name string
 }
-type Model struct {
+type SubDomain struct {
 	ARs       map[string]*Entity
 	Repos     map[string]*Repository
 	Providers map[string]*Provider
 }
-
-func (model *Model) Validate() bool {
-	for key := range model.ARs {
-		ar := model.ARs[key]
+type Model	struct {
+	SubDomains map[string]*SubDomain
+}
+func (subDomain *SubDomain) Validate() bool {
+	for key := range subDomain.ARs {
+		ar := subDomain.ARs[key]
 		for _, cEntity := range ar.callEntities {
-			if _, ok := model.ARs[cEntity.name]; !ok {
+			if _, ok := subDomain.ARs[cEntity.name]; !ok {
 				return false
 			}
 		}
+	}
+	return true
+}
+
+func (model *Model) Validate() bool {
+	for key := range model.SubDomains {
+		 if !model.SubDomains[key].Validate() {
+		 	return false
+		 }
 	}
 	return true
 }
@@ -94,25 +105,39 @@ func (repo *Repository) Compare(other *Repository) bool {
 	return repo.For.Compare(other.For)
 }
 
-func (model *Model) Compare(other *Model) bool {
-	if len(model.ARs) != len(other.ARs) {
+func (subDomain *SubDomain) Compare(other *SubDomain) bool {
+	if len(subDomain.ARs) != len(other.ARs) {
 		return false
 	}
-	if len(model.Repos) != len(other.Repos) {
+	if len(subDomain.Repos) != len(other.Repos) {
 		return false
 	}
-	for key := range model.ARs {
-		ar := model.ARs[key]
+	for key := range subDomain.ARs {
+		ar := subDomain.ARs[key]
 		if !ar.Compare(other.ARs[key]) {
 			return false
 		}
 	}
-	for key := range model.Repos {
-		repo := model.Repos[key]
+	for key := range subDomain.Repos {
+		repo := subDomain.Repos[key]
 		if !repo.Compare(other.Repos[key]) {
 			return false
 		}
 	}
+	return true
+}
+func (model *Model) Compare(other *Model) bool {
+	if len(model.SubDomains) != len(model.SubDomains) {
+		return false
+	}
+
+	for key := range model.SubDomains {
+		ar := model.SubDomains[key]
+		if !ar.Compare(other.SubDomains[key]) {
+			return false
+		}
+	}
+
 	return true
 }
 func Parse(dotFile string) *Model {
@@ -175,5 +200,8 @@ func Parse(dotFile string) *Model {
 		}
 	}
 
-	return &Model{ARs: ars, Repos: repos, Providers: providers}
+	subDomain := &SubDomain{ARs: ars, Repos: repos, Providers: providers}
+	subDomains := make(map[string]*SubDomain)
+	subDomains["subdomain"] = subDomain;
+	return &Model{SubDomains:subDomains}
 }

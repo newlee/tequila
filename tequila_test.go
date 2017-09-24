@@ -11,7 +11,7 @@ var _ = Describe("Tequila", func() {
 		It("step1", func() {
 
 			dotFile := "examples/step1-problem.dot"
-			ars := Parse(dotFile).ARs
+			ars := Parse(dotFile).SubDomains["subdomain"].ARs
 
 			Expect(len(ars)).Should(Equal(1))
 			Expect(len(ars["AggregateRootA"].ChildrenEntities())).Should(Equal(1))
@@ -22,7 +22,7 @@ var _ = Describe("Tequila", func() {
 		It("step2", func() {
 
 			dotFile := "examples/step2-problem.dot"
-			ars := Parse(dotFile).ARs
+			ars := Parse(dotFile).SubDomains["subdomain"].ARs
 
 			Expect(len(ars)).Should(Equal(2))
 			Expect(len(ars["AggregateRootA"].ChildrenEntities())).Should(Equal(1))
@@ -38,8 +38,8 @@ var _ = Describe("Tequila", func() {
 
 			dotFile := "examples/step2-problem.dot"
 			model := Parse(dotFile)
-			ars := model.ARs
-			repos := model.Repos
+			ars := model.SubDomains["subdomain"].ARs
+			repos := model.SubDomains["subdomain"].Repos
 
 			Expect(len(repos)).Should(Equal(1))
 			Expect(repos["AggregateRootARepo"].For).Should(Equal(ars["AggregateRootA"]))
@@ -48,7 +48,7 @@ var _ = Describe("Tequila", func() {
 
 			dotFile := "examples/step2-problem.dot"
 			model := Parse(dotFile)
-			providers := model.Providers
+			providers := model.SubDomains["subdomain"].Providers
 
 			Expect(len(providers)).Should(Equal(1))
 		})
@@ -59,7 +59,7 @@ var _ = Describe("Tequila", func() {
 		It("step1", func() {
 
 			codeDir := "examples/step1-code/html"
-			codeArs := ParseCodeDir(codeDir).ARs
+			codeArs := ParseCodeDir(codeDir).SubDomains["subdomain"].ARs
 
 			Expect(len(codeArs)).Should(Equal(1))
 			Expect(len(codeArs["AggregateRootA"].ChildrenEntities())).Should(Equal(1))
@@ -70,7 +70,7 @@ var _ = Describe("Tequila", func() {
 		It("step2", func() {
 
 			codeDir := "examples/step2-code/html"
-			codeArs := ParseCodeDir(codeDir).ARs
+			codeArs := ParseCodeDir(codeDir).SubDomains["subdomain"].ARs
 
 			Expect(len(codeArs)).Should(Equal(2))
 			ara := "AggregateRootA"
@@ -90,8 +90,8 @@ var _ = Describe("Tequila", func() {
 
 			codeDir := "examples/step2-code/html"
 			model := ParseCodeDir(codeDir)
-			ars := model.ARs
-			repos := model.Repos
+			ars := model.SubDomains["subdomain"].ARs
+			repos := model.SubDomains["subdomain"].Repos
 
 			Expect(len(repos)).Should(Equal(1))
 			Expect(repos["AggregateRootARepo"].For).Should(Equal(ars["AggregateRootA"]))
@@ -100,7 +100,7 @@ var _ = Describe("Tequila", func() {
 		It("step2 with provider interface", func() {
 			codeDir := "examples/step2-code/html"
 			model := ParseCodeDir(codeDir)
-			providers := model.Providers
+			providers := model.SubDomains["subdomain"].Providers
 
 			Expect(len(providers)).Should(Equal(1))
 		})
@@ -122,7 +122,7 @@ var _ = Describe("Tequila", func() {
 		It("step2", func() {
 
 			codeDir := "examples/step2-Java/html"
-			codeArs := ParseCodeDir(codeDir).ARs
+			codeArs := ParseCodeDir(codeDir).SubDomains["subdomain"].ARs
 
 			Expect(len(codeArs)).Should(Equal(2))
 			ara := "AggregateRootA"
@@ -142,8 +142,8 @@ var _ = Describe("Tequila", func() {
 
 			codeDir := "examples/step2-Java/html"
 			model := ParseCodeDir(codeDir)
-			ars := model.ARs
-			repos := model.Repos
+			ars := model.SubDomains["subdomain"].ARs
+			repos := model.SubDomains["subdomain"].Repos
 
 			Expect(len(repos)).Should(Equal(1))
 			Expect(repos["AggregateRootARepo"].For).Should(Equal(ars["AggregateRootA"]))
@@ -152,7 +152,7 @@ var _ = Describe("Tequila", func() {
 		It("step2 with provider interface", func() {
 			codeDir := "examples/step2-Java/html"
 			model := ParseCodeDir(codeDir)
-			providers := model.Providers
+			providers := model.SubDomains["subdomain"].Providers
 
 			Expect(len(providers)).Should(Equal(1))
 		})

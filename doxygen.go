@@ -231,6 +231,9 @@ func ParseCodeDir(codeDir string) *Model {
 	for _, callDotFile := range callDotFiles {
 		parseCall(callDotFile)
 	}
+	subDomains := make(map[string]*SubDomain)
+	subDomain:= &SubDomain{ARs: codeArs, Repos: repos, Providers: providers}
+	subDomains["subdomain"] = subDomain;
+	return &Model{SubDomains:subDomains}
 
-	return &Model{ARs: codeArs, Repos: repos, Providers: providers}
 }
