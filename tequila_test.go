@@ -10,6 +10,7 @@ var _ = Describe("Tequila", func() {
 	const subDomainName = "subdomain"
 	const aggregateAName = "AggregateRootA"
 	const aggregateBName = "AggregateRootB"
+	var subs = make([]string, 0)
 	Context("Parse DDD Model", func() {
 		It("step1", func() {
 
@@ -93,7 +94,7 @@ var _ = Describe("Tequila", func() {
 		It("step1", func() {
 
 			codeDir := "examples/step1-code/html"
-			codeArs := ParseCodeDir(codeDir).SubDomains[subDomainName].ARs
+			codeArs := ParseCodeDir(codeDir, subs).SubDomains[subDomainName].ARs
 
 			Expect(len(codeArs)).Should(Equal(1))
 			Expect(len(codeArs[aggregateAName].ChildrenEntities())).Should(Equal(1))
@@ -104,7 +105,7 @@ var _ = Describe("Tequila", func() {
 		It("step2", func() {
 
 			codeDir := "examples/step2-code/html"
-			codeArs := ParseCodeDir(codeDir).SubDomains[subDomainName].ARs
+			codeArs := ParseCodeDir(codeDir, subs).SubDomains[subDomainName].ARs
 
 			Expect(len(codeArs)).Should(Equal(2))
 			ara := aggregateAName
@@ -123,7 +124,7 @@ var _ = Describe("Tequila", func() {
 		It("step2 with repository", func() {
 
 			codeDir := "examples/step2-code/html"
-			model := ParseCodeDir(codeDir)
+			model := ParseCodeDir(codeDir, subs)
 			ars := model.SubDomains[subDomainName].ARs
 			repos := model.SubDomains[subDomainName].Repos
 
@@ -133,19 +134,19 @@ var _ = Describe("Tequila", func() {
 
 		It("step2 with provider interface", func() {
 			codeDir := "examples/step2-code/html"
-			model := ParseCodeDir(codeDir)
+			model := ParseCodeDir(codeDir, subs)
 			providers := model.SubDomains[subDomainName].Providers
 
 			Expect(len(providers)).Should(Equal(1))
 		})
 		It("step3 should failded when aggregate ref another entity", func() {
 			codeDir := "examples/step2-code/html"
-			model := ParseCodeDir(codeDir)
+			model := ParseCodeDir(codeDir, subs)
 
 			Expect(model.Validate()).Should(Equal(true))
 
 			codeDir = "examples/step3-code/html"
-			model = ParseCodeDir(codeDir)
+			model = ParseCodeDir(codeDir, subs)
 
 			Expect(model.Validate()).Should(Equal(false))
 		})
@@ -156,7 +157,7 @@ var _ = Describe("Tequila", func() {
 		It("step2", func() {
 
 			codeDir := "examples/step2-Java/html"
-			codeArs := ParseCodeDir(codeDir).SubDomains[subDomainName].ARs
+			codeArs := ParseCodeDir(codeDir, subs).SubDomains[subDomainName].ARs
 
 			Expect(len(codeArs)).Should(Equal(2))
 			ara := aggregateAName
@@ -175,7 +176,7 @@ var _ = Describe("Tequila", func() {
 		It("step2 with repository", func() {
 
 			codeDir := "examples/step2-Java/html"
-			model := ParseCodeDir(codeDir)
+			model := ParseCodeDir(codeDir, subs)
 			ars := model.SubDomains[subDomainName].ARs
 			repos := model.SubDomains[subDomainName].Repos
 
@@ -185,16 +186,44 @@ var _ = Describe("Tequila", func() {
 
 		It("step2 with provider interface", func() {
 			codeDir := "examples/step2-Java/html"
-			model := ParseCodeDir(codeDir)
+			model := ParseCodeDir(codeDir, subs)
 			providers := model.SubDomains[subDomainName].Providers
 
 			Expect(len(providers)).Should(Equal(1))
 		})
 		It("step3 should failded when aggregate ref another entity", func() {
 			codeDir := "examples/step2-Java/html"
-			model := ParseCodeDir(codeDir)
+			model := ParseCodeDir(codeDir, subs)
 
 			Expect(model.Validate()).Should(Equal(true))
+		})
+
+		It("sub domain", func() {
+			codeDir := "examples/subdomain-code/html"
+			model := ParseCodeDir(codeDir, []string{"subdomain1", "subdomain2"})
+
+			Expect(len(model.SubDomains)).Should(Equal(2))
+			subDomain := model.SubDomains["subdomain1"]
+			ars := subDomain.ARs
+			aggregateA := ars[aggregateAName]
+			Expect(len(aggregateA.ChildrenEntities())).Should(Equal(1))
+			Expect(len(aggregateA.ChildrenValueObjects())).Should(Equal(1))
+			entityB := aggregateA.ChildrenEntities()[0]
+			Expect(len(entityB.ChildrenValueObjects())).Should(Equal(1))
+
+			aggregateB := ars[aggregateBName]
+			Expect(len(aggregateB.ChildrenEntities())).Should(Equal(0))
+			Expect(len(aggregateB.Refs)).Should(Equal(1))
+			Expect(aggregateB.Refs[0]).Should(Equal(aggregateA))
+
+			subDomain = model.SubDomains["subdomain2"]
+			ars = subDomain.ARs
+			aggregateC := ars["AggregateRootC"]
+			Expect(len(aggregateC.ChildrenEntities())).Should(Equal(1))
+			Expect(len(aggregateC.ChildrenValueObjects())).Should(Equal(0))
+			EntityC := aggregateC.ChildrenEntities()[0]
+			Expect(len(EntityC.ChildrenValueObjects())).Should(Equal(0))
+
 		})
 	})
 })

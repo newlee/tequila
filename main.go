@@ -9,6 +9,6 @@ func main() {
 	dddModel := Parse(dotFile)
 
 	codeDir := "examples/step2-java/html"
-	codeModel := ParseCodeDir(codeDir)
+	codeModel := ParseCodeDir(codeDir, make([]string, 0))
 	fmt.Println(dddModel.Compare(codeModel))
 }

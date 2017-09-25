@@ -17,6 +17,7 @@ type CodeDotFileParseResult struct {
 var codeArs = make(map[string]*Entity)
 var repos = make(map[string]*Repository)
 var providers = make(map[string]*Provider)
+var subDomainMap = make(map[string][]string)
 
 func isAggregateRoot(className string) bool {
 	tmp := strings.Split(className, "::")
@@ -31,6 +32,12 @@ func (result *CodeDotFileParseResult) parse(edge *gographviz.Edge, nodes map[str
 	}
 
 	dst := strings.Replace(tmp[len(tmp)-1], "\\l", "", -1)
+
+	subDomain := strings.Replace(tmp[0], "\\l", "", -1)
+	if _, ok := subDomainMap[subDomain]; ok {
+		subDomainMap[subDomain] = append(subDomainMap[subDomain], dst)
+	}
+
 	if strings.Contains(nodes[edge.Src], "::") {
 		tmp = strings.Split(nodes[edge.Src], "::")
 	} else {
@@ -160,7 +167,6 @@ func parseDotFile(codeDotfile string) *CodeDotFileParseResult {
 
 func parseCode(codeDotfile string) {
 	codeDotFileParseResult := parseDotFile(codeDotfile)
-
 	for key := range codeDotFileParseResult.edges {
 		codeDotFileParseResult.parseAggregateRoot(key)
 		codeDotFileParseResult.parseEntity(key)
@@ -218,12 +224,15 @@ func parseCall(codeDotfile string) {
 	}
 
 }
-func ParseCodeDir(codeDir string) *Model {
+func ParseCodeDir(codeDir string, subs []string) *Model {
 	codeDotFiles := codeDotFiles(codeDir)
 	codeArs = make(map[string]*Entity)
 	repos = make(map[string]*Repository)
 	providers = make(map[string]*Provider)
-
+	subDomainMap = make(map[string][]string)
+	for _, sub := range subs {
+		subDomainMap[sub] = make([]string, 0)
+	}
 	for _, codeDotfile := range codeDotFiles {
 		parseCode(codeDotfile)
 	}
@@ -232,8 +241,32 @@ func ParseCodeDir(codeDir string) *Model {
 		parseCall(callDotFile)
 	}
 	subDomains := make(map[string]*SubDomain)
-	subDomain:= &SubDomain{ARs: codeArs, Repos: repos, Providers: providers}
-	subDomains["subdomain"] = subDomain;
-	return &Model{SubDomains:subDomains}
+	if len(subDomainMap) > 0 {
+		for key := range subDomainMap {
+			t_ars := make(map[string]*Entity)
+			t_repos := make(map[string]*Repository)
+			t_providers := make(map[string]*Provider)
+			for _, ekey := range subDomainMap[key] {
+				if ar, ok := codeArs[ekey]; ok {
+
+					t_ars[ekey] = ar
+				}
+				if repo, ok := repos[ekey]; ok {
+					t_repos[ekey] = repo
+				}
+				if provider, ok := providers[ekey]; ok {
+					t_providers[ekey] = provider
+				}
+			}
+			subDomain := &SubDomain{ARs: t_ars, Repos: t_repos, Providers: t_providers}
+			subDomains[key] = subDomain
+		}
+	} else {
+
+		subDomain := &SubDomain{ARs: codeArs, Repos: repos, Providers: providers}
+		subDomains["subdomain"] = subDomain
+	}
+
+	return &Model{SubDomains: subDomains}
 
 }
