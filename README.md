@@ -10,7 +10,7 @@
 ### Example:
 * DDD Model(![dot file](/examples/step2-problem.dot))
 
-![](https://rawgit.com/newlee/tequila/master/examples/step2-problem.png)
+![](https://rawgit.com/newlee/tequila/master/examples/subdomain.png)
 
 * ![Code](/examples/step2-code/code.h)
 * ![Doxygen File](/examples/step2-code/Doxyfile)

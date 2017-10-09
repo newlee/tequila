@@ -174,9 +174,9 @@ func parseCode(codeDotfile string) {
 }
 
 func doCallRelation(src string, dst string) {
-	for arKey, _ := range codeArs {
+	for arKey := range codeArs {
 		if srcEntity, ok := codeArs[arKey].findEntity(src); ok {
-			for arKey2, _ := range codeArs {
+			for arKey2 := range codeArs {
 				if arKey != arKey2 {
 					if dstEntity, ok := codeArs[arKey2].findEntity(dst); ok {
 						srcEntity.callEntities = append(srcEntity.callEntities, dstEntity)
