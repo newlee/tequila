@@ -102,42 +102,86 @@ func (subDomain *SubDomain) addNode(cms *CommentMappingList, name, comment strin
 	}
 }
 
+type SubDomainWhenThen struct {
+	subDomain *SubDomain
+	isMatch   bool
+	current   interface{}
+	src       string
+	dsts      []string
+}
+
+func (subDomain *SubDomain) given(src string, dsts []string) *SubDomainWhenThen {
+	return &SubDomainWhenThen{
+		subDomain: subDomain,
+		src:       src,
+		dsts:      dsts,
+	}
+}
+
+func (whenThen *SubDomainWhenThen) when(fined interface{}, ok bool) *SubDomainWhenThen {
+	whenThen.isMatch = ok
+	if ok {
+		whenThen.current = fined
+	}
+
+	return whenThen
+}
+
+func (whenThen *SubDomainWhenThen) whenRepo() *SubDomainWhenThen {
+	repo, ok := whenThen.subDomain.Repos[whenThen.src]
+	return whenThen.when(repo, ok)
+}
+
+func (whenThen *SubDomainWhenThen) whenEntity() *SubDomainWhenThen {
+	entity, ok := whenThen.subDomain.es[whenThen.src]
+	return whenThen.when(entity, ok)
+}
+func (whenThen *SubDomainWhenThen) whenAggregateRoot() *SubDomainWhenThen {
+	ar, ok := whenThen.subDomain.ARs[whenThen.src]
+	return whenThen.when(ar, ok)
+}
+
+func (whenThen *SubDomainWhenThen) thenAdd(addRelations func(interface{}, []string)) *SubDomainWhenThen {
+	if whenThen.isMatch {
+		addRelations(whenThen.current, whenThen.dsts)
+	}
+	return whenThen
+}
+
 func (subDomain *SubDomain) addRelations(src string, dsts []string) {
-	if ar, ok := subDomain.ARs[src]; ok {
-		subDomain.addAggregateRootRelations(ar,dsts )
-	}
-	if entity, ok := subDomain.es[src]; ok {
-		subDomain.addEntityRelations(entity,dsts)
-	}
-	if repo, ok := subDomain.Repos[src]; ok {
-		subDomain.addRepoRelations(repo,dsts)
+	subDomain.given(src, dsts).
+		whenAggregateRoot().thenAdd(subDomain.addAggregateRootRelations).
+		whenEntity().thenAdd(subDomain.addEntityRelations).
+		whenRepo().thenAdd(subDomain.addRepoRelations)
+}
+
+func (subDomain *SubDomain) addRepoRelations(repo interface{}, dsts []string) {
+	for _, dst := range dsts {
+		repo.(*Repository).For = subDomain.ARs[dst]
 	}
 }
-func (subDomain *SubDomain) addRepoRelations( repo *Repository, dsts []string) {
+func (subDomain *SubDomain) addEntityRelations(entity interface{}, dsts []string) {
 	for _, dst := range dsts {
-		repo.For = subDomain.ARs[dst]
-	}
-}
-func (subDomain *SubDomain) addEntityRelations(entity *Entity,dsts []string) {
-	for _, dst := range dsts {
+		_entity := entity.(*Entity)
 		if et, ok := subDomain.es[dst]; ok {
-			entity.Entities = append(entity.Entities, et)
+			_entity.Entities = append(_entity.Entities, et)
 		}
 		if vo, ok := subDomain.vos[dst]; ok {
-			entity.VOs = append(entity.VOs, vo)
+			_entity.VOs = append(_entity.VOs, vo)
 		}
 	}
 }
-func (subDomain *SubDomain) addAggregateRootRelations(ar *Entity,dsts []string) {
+func (subDomain *SubDomain) addAggregateRootRelations(ar interface{}, dsts []string) {
 	for _, dst := range dsts {
+		_ar := ar.(*Entity)
 		if ref, ok := subDomain.ARs[dst]; ok {
-			ar.Refs = append(ar.Refs, ref)
+			_ar.Refs = append(_ar.Refs, ref)
 		}
 		if et, ok := subDomain.es[dst]; ok {
-			ar.Entities = append(ar.Entities, et)
+			_ar.Entities = append(_ar.Entities, et)
 		}
 		if vo, ok := subDomain.vos[dst]; ok {
-			ar.VOs = append(ar.VOs, vo)
+			_ar.VOs = append(_ar.VOs, vo)
 		}
 	}
 }
