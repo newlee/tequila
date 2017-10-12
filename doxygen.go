@@ -30,26 +30,9 @@ func isAggregateRoot(className string) bool {
 	return tmp[len(tmp)-1] == "AggregateRoot"
 }
 func (result *CodeDotFileParseResult) parse(edge *gographviz.Edge, nodes map[string]string) {
-	tmp := make([]string, 0)
-	if strings.Contains(nodes[edge.Dst], "::") {
-		tmp = strings.Split(nodes[edge.Dst], "::")
-	} else {
-		tmp = strings.Split(nodes[edge.Dst], ".")
-	}
+	dst := nodes[edge.Dst]
+	src:= nodes[edge.Src]
 
-	dst := strings.Replace(tmp[len(tmp)-1], "\\l", "", -1)
-
-	subDomain := strings.Replace(tmp[0], "\\l", "", -1)
-	if _, ok := subDomainMap[subDomain]; ok {
-		subDomainMap[subDomain] = append(subDomainMap[subDomain], dst)
-	}
-
-	if strings.Contains(nodes[edge.Src], "::") {
-		tmp = strings.Split(nodes[edge.Src], "::")
-	} else {
-		tmp = strings.Split(nodes[edge.Src], ".")
-	}
-	src := strings.Replace(tmp[len(tmp)-1], "\\l", "", -1)
 	if edge.Attrs["style"] == "\"dashed\"" {
 		if _, ok := result.edges[dst]; !ok {
 			result.edges[dst] = make([]string, 0)
@@ -142,19 +125,12 @@ func callDotFiles(codeDir string) []string {
 	return callDotFiles
 }
 
-func nodes(g *gographviz.Graph) map[string]string {
-	nodes := make(map[string]string)
-	for _, node := range g.Nodes.Nodes {
-		nodes[node.Name] = strings.Replace(node.Attrs["label"], "\"", "", 2)
-	}
-	return nodes
-}
 
 func parseDotFile(codeDotfile string) *CodeDotFileParseResult {
 	fbuf, _ := ioutil.ReadFile(codeDotfile)
 	g, _ := gographviz.Read(fbuf)
 
-	nodes := nodes(g)
+	nodes := nodes(g, 1)
 	result := &CodeDotFileParseResult{
 		edges: make(map[string][]string),
 		es:    make(map[string]*Entity),
@@ -192,38 +168,50 @@ func doCallRelation(src string, dst string) {
 	}
 }
 
-func parseCall(codeDotfile string) {
+func getMethodName(fullMethodName, split string, index int) (string,string, bool) {
+	if strings.Contains(fullMethodName, split) {
+		tmp := strings.Split(fullMethodName, split)
+		methodName := tmp[len(tmp)-index]
+		methodName = strings.Replace(methodName, "\\l", "", -1)
+		subDomain := strings.Replace(tmp[0], "\\l", "", -1)
+		if _, ok := subDomainMap[subDomain]; ok {
+			subDomainMap[subDomain] = append(subDomainMap[subDomain], methodName)
+		}
+		return methodName,subDomain, true
+	}
+	return fullMethodName,"", false
+}
 
+func nodes(g *gographviz.Graph, index int) map[string]string {
+	nodes := make(map[string]string)
+	for _, node := range g.Nodes.Nodes {
+		fullMethodName := strings.Replace(node.Attrs["label"], "\"", "", 2)
+
+		if methodName,_,ok := getMethodName(fullMethodName,"::", index);ok{
+			nodes[node.Name] = methodName
+		}else{
+			nodes[node.Name],_, _ = getMethodName(fullMethodName,".", index)
+		}
+	}
+	return nodes
+}
+
+func parseCall(codeDotfile string) {
 	fbuf, _ := ioutil.ReadFile(codeDotfile)
 	g, _ := gographviz.Read(fbuf)
 
-	nodes := nodes(g)
-	for key := range nodes {
-		fullMethodName := nodes[key]
-		if strings.Contains(fullMethodName, "::") {
-			tmp := strings.Split(fullMethodName, "::")
-			methodName := tmp[len(tmp)-2]
-			nodes[key] = strings.Replace(methodName, "\\l", "", -1) //, "\\l", "", -1)
-		} else {
-			tmp := strings.Split(fullMethodName, ".")
-			methodName := tmp[len(tmp)-2]
-			nodes[key] = strings.Replace(methodName, "\\l", "", -1) //, "\\l", "", -1)
-		}
+	nodes := nodes(g, 2)
 
-	}
 	for key := range g.Edges.DstToSrcs {
 		for edgesKey := range g.Edges.DstToSrcs[key] {
-			for _, edge := range g.Edges.DstToSrcs[key][edgesKey] {
+			dst := nodes[key]
+			src := nodes[edgesKey]
 
-				dst := nodes[edge.Dst]
-				src := nodes[edge.Src]
+			if repo, ok := repos[src]; ok {
+				repo.For = codeArs[dst]
 
-				if repo, ok := repos[src]; ok {
-					repo.For = codeArs[dst]
-
-				} else {
-					doCallRelation(src, dst)
-				}
+			} else {
+				doCallRelation(src, dst)
 			}
 		}
 	}
