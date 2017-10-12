@@ -19,10 +19,10 @@ var _ = Describe("Tequila", func() {
 
 			Expect(len(ars)).Should(Equal(1))
 			aggregateA := ars[aggregateAName]
-			Expect(len(aggregateA.ChildrenEntities())).Should(Equal(1))
-			Expect(len(aggregateA.ChildrenValueObjects())).Should(Equal(1))
-			entityB := aggregateA.ChildrenEntities()[0]
-			Expect(len(entityB.ChildrenValueObjects())).Should(Equal(1))
+			Expect(len(aggregateA.Entities)).Should(Equal(1))
+			Expect(len(aggregateA.VOs)).Should(Equal(1))
+			entityB := aggregateA.Entities[0]
+			Expect(len(entityB.VOs)).Should(Equal(1))
 		})
 		It("step2", func() {
 
@@ -31,13 +31,13 @@ var _ = Describe("Tequila", func() {
 
 			Expect(len(ars)).Should(Equal(2))
 			aggregateA := ars[aggregateAName]
-			Expect(len(aggregateA.ChildrenEntities())).Should(Equal(1))
-			Expect(len(aggregateA.ChildrenValueObjects())).Should(Equal(1))
-			entityB := aggregateA.ChildrenEntities()[0]
-			Expect(len(entityB.ChildrenValueObjects())).Should(Equal(1))
+			Expect(len(aggregateA.Entities)).Should(Equal(1))
+			Expect(len(aggregateA.VOs)).Should(Equal(1))
+			entityB := aggregateA.Entities[0]
+			Expect(len(entityB.VOs)).Should(Equal(1))
 
 			aggregateB := ars[aggregateBName]
-			Expect(len(aggregateB.ChildrenEntities())).Should(Equal(0))
+			Expect(len(aggregateB.Entities)).Should(Equal(0))
 			Expect(len(aggregateB.Refs)).Should(Equal(1))
 			Expect(aggregateB.Refs[0]).Should(Equal(aggregateA))
 		})
@@ -68,23 +68,23 @@ var _ = Describe("Tequila", func() {
 			subDomain := model.SubDomains["subdomain1"]
 			ars := subDomain.ARs
 			aggregateA := ars[aggregateAName]
-			Expect(len(aggregateA.ChildrenEntities())).Should(Equal(1))
-			Expect(len(aggregateA.ChildrenValueObjects())).Should(Equal(1))
-			entityB := aggregateA.ChildrenEntities()[0]
-			Expect(len(entityB.ChildrenValueObjects())).Should(Equal(1))
+			Expect(len(aggregateA.Entities)).Should(Equal(1))
+			Expect(len(aggregateA.VOs)).Should(Equal(1))
+			entityB := aggregateA.Entities[0]
+			Expect(len(entityB.VOs)).Should(Equal(1))
 
 			aggregateB := ars[aggregateBName]
-			Expect(len(aggregateB.ChildrenEntities())).Should(Equal(0))
+			Expect(len(aggregateB.Entities)).Should(Equal(0))
 			Expect(len(aggregateB.Refs)).Should(Equal(1))
 			Expect(aggregateB.Refs[0]).Should(Equal(aggregateA))
 
 			subDomain = model.SubDomains["subdomain2"]
 			ars = subDomain.ARs
 			aggregateC := ars["AggregateRootC"]
-			Expect(len(aggregateC.ChildrenEntities())).Should(Equal(1))
-			Expect(len(aggregateC.ChildrenValueObjects())).Should(Equal(0))
-			EntityC := aggregateC.ChildrenEntities()[0]
-			Expect(len(EntityC.ChildrenValueObjects())).Should(Equal(0))
+			Expect(len(aggregateC.Entities)).Should(Equal(1))
+			Expect(len(aggregateC.VOs)).Should(Equal(0))
+			EntityC := aggregateC.Entities[0]
+			Expect(len(EntityC.VOs)).Should(Equal(0))
 
 		})
 	})
@@ -97,10 +97,10 @@ var _ = Describe("Tequila", func() {
 			codeArs := ParseCodeDir(codeDir, subs).SubDomains[subDomainName].ARs
 
 			Expect(len(codeArs)).Should(Equal(1))
-			Expect(len(codeArs[aggregateAName].ChildrenEntities())).Should(Equal(1))
-			Expect(len(codeArs[aggregateAName].ChildrenValueObjects())).Should(Equal(1))
-			entityB := codeArs[aggregateAName].ChildrenEntities()[0]
-			Expect(len(entityB.ChildrenValueObjects())).Should(Equal(1))
+			Expect(len(codeArs[aggregateAName].Entities)).Should(Equal(1))
+			Expect(len(codeArs[aggregateAName].VOs)).Should(Equal(1))
+			entityB := codeArs[aggregateAName].Entities[0]
+			Expect(len(entityB.VOs)).Should(Equal(1))
 		})
 		It("step2", func() {
 
@@ -111,12 +111,12 @@ var _ = Describe("Tequila", func() {
 			ara := aggregateAName
 			arb := aggregateBName
 
-			Expect(len(codeArs[ara].ChildrenEntities())).Should(Equal(1))
-			Expect(len(codeArs[ara].ChildrenValueObjects())).Should(Equal(1))
-			entityB := codeArs[ara].ChildrenEntities()[0]
-			Expect(len(entityB.ChildrenValueObjects())).Should(Equal(1))
+			Expect(len(codeArs[ara].Entities)).Should(Equal(1))
+			Expect(len(codeArs[ara].VOs)).Should(Equal(1))
+			entityB := codeArs[ara].Entities[0]
+			Expect(len(entityB.VOs)).Should(Equal(1))
 
-			Expect(len(codeArs[arb].ChildrenEntities())).Should(Equal(0))
+			Expect(len(codeArs[arb].Entities)).Should(Equal(0))
 			Expect(len(codeArs[arb].Refs)).Should(Equal(1))
 			Expect(codeArs[arb].Refs[0]).Should(Equal(codeArs[ara]))
 		})
@@ -163,12 +163,12 @@ var _ = Describe("Tequila", func() {
 			ara := aggregateAName
 			arb := aggregateBName
 
-			Expect(len(codeArs[ara].ChildrenEntities())).Should(Equal(1))
-			Expect(len(codeArs[ara].ChildrenValueObjects())).Should(Equal(1))
-			entityB := codeArs[ara].ChildrenEntities()[0]
-			Expect(len(entityB.ChildrenValueObjects())).Should(Equal(1))
+			Expect(len(codeArs[ara].Entities)).Should(Equal(1))
+			Expect(len(codeArs[ara].VOs)).Should(Equal(1))
+			entityB := codeArs[ara].Entities[0]
+			Expect(len(entityB.VOs)).Should(Equal(1))
 
-			Expect(len(codeArs[arb].ChildrenEntities())).Should(Equal(0))
+			Expect(len(codeArs[arb].Entities)).Should(Equal(0))
 			Expect(len(codeArs[arb].Refs)).Should(Equal(1))
 			Expect(codeArs[arb].Refs[0]).Should(Equal(codeArs[ara]))
 		})
@@ -206,23 +206,23 @@ var _ = Describe("Tequila", func() {
 			subDomain := model.SubDomains["subdomain1"]
 			ars := subDomain.ARs
 			aggregateA := ars[aggregateAName]
-			Expect(len(aggregateA.ChildrenEntities())).Should(Equal(1))
-			Expect(len(aggregateA.ChildrenValueObjects())).Should(Equal(1))
-			entityB := aggregateA.ChildrenEntities()[0]
-			Expect(len(entityB.ChildrenValueObjects())).Should(Equal(1))
+			Expect(len(aggregateA.Entities)).Should(Equal(1))
+			Expect(len(aggregateA.VOs)).Should(Equal(1))
+			entityB := aggregateA.Entities[0]
+			Expect(len(entityB.VOs)).Should(Equal(1))
 
 			aggregateB := ars[aggregateBName]
-			Expect(len(aggregateB.ChildrenEntities())).Should(Equal(0))
+			Expect(len(aggregateB.Entities)).Should(Equal(0))
 			Expect(len(aggregateB.Refs)).Should(Equal(1))
 			Expect(aggregateB.Refs[0]).Should(Equal(aggregateA))
 
 			subDomain = model.SubDomains["subdomain2"]
 			ars = subDomain.ARs
 			aggregateC := ars["AggregateRootC"]
-			Expect(len(aggregateC.ChildrenEntities())).Should(Equal(1))
-			Expect(len(aggregateC.ChildrenValueObjects())).Should(Equal(0))
-			EntityC := aggregateC.ChildrenEntities()[0]
-			Expect(len(EntityC.ChildrenValueObjects())).Should(Equal(0))
+			Expect(len(aggregateC.Entities)).Should(Equal(1))
+			Expect(len(aggregateC.VOs)).Should(Equal(0))
+			EntityC := aggregateC.Entities[0]
+			Expect(len(EntityC.VOs)).Should(Equal(0))
 
 		})
 	})

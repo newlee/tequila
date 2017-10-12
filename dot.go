@@ -7,8 +7,8 @@ import (
 
 type Entity struct {
 	name         string
-	entities     []*Entity
-	vos          []*ValueObject
+	Entities     []*Entity
+	VOs          []*ValueObject
 	Refs         []*Entity
 	callEntities []*Entity
 }
@@ -35,6 +35,30 @@ type Model struct {
 	SubDomains map[string]*SubDomain
 }
 
+func (model *Model) Validate() bool {
+	for key := range model.SubDomains {
+		if !model.SubDomains[key].Validate() {
+			return false
+		}
+	}
+	return true
+}
+
+func (model *Model) Compare(other *Model) bool {
+	if len(model.SubDomains) != len(model.SubDomains) {
+		return false
+	}
+
+	for key := range model.SubDomains {
+		ar := model.SubDomains[key]
+		if !ar.Compare(other.SubDomains[key]) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (subDomain *SubDomain) Validate() bool {
 	for key := range subDomain.ARs {
 		ar := subDomain.ARs[key]
@@ -45,67 +69,6 @@ func (subDomain *SubDomain) Validate() bool {
 		}
 	}
 	return true
-}
-
-func (model *Model) Validate() bool {
-	for key := range model.SubDomains {
-		if !model.SubDomains[key].Validate() {
-			return false
-		}
-	}
-	return true
-}
-
-func (entity *Entity) findEntity(name string) (*Entity, bool) {
-	if entity.name == name {
-		return entity, true
-	} else {
-		for _, et := range entity.entities {
-			if finded, ok := et.findEntity(name); ok {
-				return finded, true
-			}
-		}
-	}
-	return nil, false
-}
-
-func (entity *Entity) ChildrenEntities() []*Entity {
-	return entity.entities
-}
-
-func (entity *Entity) ChildrenValueObjects() []*ValueObject {
-	return entity.vos
-}
-func (entity *Entity) Compare(other *Entity) bool {
-	if len(entity.entities) != len(other.entities) {
-		return false
-	}
-	if len(entity.vos) != len(other.vos) {
-		return false
-	}
-	em := make(map[string]*Entity)
-	for _, childEntity := range entity.entities {
-		em[childEntity.name] = childEntity
-	}
-	for _, childEntity := range other.entities {
-		if !em[childEntity.name].Compare(childEntity) {
-			return false
-		}
-	}
-	vom := make(map[string]*ValueObject)
-	for _, vo := range entity.vos {
-		vom[vo.name] = vo
-	}
-	for _, vo := range other.vos {
-		if _, ok := vom[vo.name]; !ok {
-			return false
-		}
-	}
-	return true
-}
-
-func (repo *Repository) Compare(other *Repository) bool {
-	return repo.For.Compare(other.For)
 }
 
 func (subDomain *SubDomain) Compare(other *SubDomain) bool {
@@ -129,33 +92,156 @@ func (subDomain *SubDomain) Compare(other *SubDomain) bool {
 	}
 	return true
 }
-func createSubDomain() *SubDomain {
-	ars := make(map[string]*Entity)
-	es := make(map[string]*Entity)
-	vos := make(map[string]*ValueObject)
-	repos := make(map[string]*Repository)
-	providers := make(map[string]*Provider)
-	return &SubDomain{ARs: ars, Repos: repos, Providers: providers, es: es, vos: vos}
+
+func (subDomain *SubDomain) addNode(cms *CommentMappingList, name, comment string) {
+	for _, cm := range *cms {
+		if cm.comment == comment {
+			cm.mapping(subDomain, name)
+			break
+		}
+	}
 }
-func (model *Model) Compare(other *Model) bool {
-	if len(model.SubDomains) != len(model.SubDomains) {
+
+func (subDomain *SubDomain) addRelations(src string, dsts []string) {
+	if ar, ok := subDomain.ARs[src]; ok {
+		subDomain.addAggregateRootRelations(ar,dsts )
+	}
+	if entity, ok := subDomain.es[src]; ok {
+		subDomain.addEntityRelations(entity,dsts)
+	}
+	if repo, ok := subDomain.Repos[src]; ok {
+		subDomain.addRepoRelations(repo,dsts)
+	}
+}
+func (subDomain *SubDomain) addRepoRelations( repo *Repository, dsts []string) {
+	for _, dst := range dsts {
+		repo.For = subDomain.ARs[dst]
+	}
+}
+func (subDomain *SubDomain) addEntityRelations(entity *Entity,dsts []string) {
+	for _, dst := range dsts {
+		if et, ok := subDomain.es[dst]; ok {
+			entity.Entities = append(entity.Entities, et)
+		}
+		if vo, ok := subDomain.vos[dst]; ok {
+			entity.VOs = append(entity.VOs, vo)
+		}
+	}
+}
+func (subDomain *SubDomain) addAggregateRootRelations(ar *Entity,dsts []string) {
+	for _, dst := range dsts {
+		if ref, ok := subDomain.ARs[dst]; ok {
+			ar.Refs = append(ar.Refs, ref)
+		}
+		if et, ok := subDomain.es[dst]; ok {
+			ar.Entities = append(ar.Entities, et)
+		}
+		if vo, ok := subDomain.vos[dst]; ok {
+			ar.VOs = append(ar.VOs, vo)
+		}
+	}
+}
+
+func (entity *Entity) findEntity(name string) (*Entity, bool) {
+	if entity.name == name {
+		return entity, true
+	} else {
+		for _, et := range entity.Entities {
+			if finded, ok := et.findEntity(name); ok {
+				return finded, true
+			}
+		}
+	}
+	return nil, false
+}
+
+func (entity *Entity) Compare(other *Entity) bool {
+	if len(entity.Entities) != len(other.Entities) {
 		return false
 	}
-
-	for key := range model.SubDomains {
-		ar := model.SubDomains[key]
-		if !ar.Compare(other.SubDomains[key]) {
+	if len(entity.VOs) != len(other.VOs) {
+		return false
+	}
+	em := make(map[string]*Entity)
+	for _, childEntity := range entity.Entities {
+		em[childEntity.name] = childEntity
+	}
+	for _, childEntity := range other.Entities {
+		if !em[childEntity.name].Compare(childEntity) {
 			return false
 		}
 	}
-
+	vom := make(map[string]*ValueObject)
+	for _, vo := range entity.VOs {
+		vom[vo.name] = vo
+	}
+	for _, vo := range other.VOs {
+		if _, ok := vom[vo.name]; !ok {
+			return false
+		}
+	}
 	return true
 }
+
+func (repo *Repository) Compare(other *Repository) bool {
+	return repo.For.Compare(other.For)
+}
+
+func createSubDomain() *SubDomain {
+	return &SubDomain{
+		ARs:       make(map[string]*Entity),
+		Repos:     make(map[string]*Repository),
+		Providers: make(map[string]*Provider),
+		es:        make(map[string]*Entity),
+		vos:       make(map[string]*ValueObject),
+	}
+}
+
+type CommentMapping struct {
+	comment string
+	mapping func(domain *SubDomain, name string)
+}
+
+type CommentMappingList []*CommentMapping
+
+var addAggregateRootFunc = func(subDomain *SubDomain, name string) {
+	subDomain.ARs[name] = &Entity{name: name}
+}
+var addEntityFunc = func(subDomain *SubDomain, name string) {
+	subDomain.es[name] = &Entity{name: name}
+}
+var addValueObjectFunc = func(subDomain *SubDomain, name string) {
+	subDomain.vos[name] = &ValueObject{name: name}
+}
+
+var addRepoFunc = func(subDomain *SubDomain, name string) {
+	subDomain.Repos[name] = &Repository{name: name}
+}
+var addProviderFunc = func(subDomain *SubDomain, name string) {
+	subDomain.Providers[name] = &Provider{name: name}
+}
+
+func InitCommentMapping() *CommentMappingList {
+	return &CommentMappingList{
+		{comment: "AR", mapping: addAggregateRootFunc},
+		{comment: "E", mapping: addEntityFunc},
+		{comment: "VO", mapping: addValueObjectFunc},
+		{comment: "Repo", mapping: addRepoFunc},
+		{comment: "Provider", mapping: addProviderFunc},
+	}
+}
+
+func edgesKey(edges map[string][]*gographviz.Edge) []string {
+	result := make([]string, 0)
+	for key := range edges {
+		result = append(result, key)
+	}
+	return result
+}
+
 func Parse(dotFile string) *Model {
 	fbuf, _ := ioutil.ReadFile(dotFile)
 	g, _ := gographviz.Read(fbuf)
-
-	// fmt.Println(g.Nodes.Nodes[0].Attrs["comment"])
 
 	c2pMap := make(map[string]string)
 	p2c := g.Relations.ParentToChildren
@@ -171,66 +257,21 @@ func Parse(dotFile string) *Model {
 		for clusterKey := range p2c {
 			subDomainName := g.SubGraphs.SubGraphs[clusterKey].Attrs["label"]
 			for key := range p2c[clusterKey] {
-				c2pMap[key] =subDomainName
+				c2pMap[key] = subDomainName
 			}
 			subDomains[subDomainName] = createSubDomain()
 		}
 	}
-
+	cms := InitCommentMapping()
 	for _, node := range g.Nodes.Nodes {
 		subDomain := subDomains[c2pMap[node.Name]]
-		if node.Attrs["comment"] == "AR" {
-			subDomain.ARs[node.Name] = &Entity{name: node.Name}
-		}
-		if node.Attrs["comment"] == "E" {
-			subDomain.es[node.Name] = &Entity{name: node.Name}
-		}
-		if node.Attrs["comment"] == "VO" {
-			subDomain.vos[node.Name] = &ValueObject{name: node.Name}
-		}
-		if node.Attrs["comment"] == "Repo" {
-			subDomain.Repos[node.Name] = &Repository{name: node.Name}
-		}
-		if node.Attrs["comment"] == "Provider" {
-			subDomain.Providers[node.Name] = &Provider{name: node.Name}
-		}
+		subDomain.addNode(cms, node.Name, node.Attrs["comment"])
 	}
 
 	for key := range g.Edges.SrcToDsts {
+		edgeKeys := edgesKey(g.Edges.SrcToDsts[key])
 		subDomain := subDomains[c2pMap[key]]
-		ars := subDomain.ARs
-		es := subDomain.es
-		vos := subDomain.vos
-		repos := subDomain.Repos
-		if ar, ok := ars[key]; ok {
-			for ckey := range g.Edges.SrcToDsts[key] {
-				if ref, ok := ars[ckey]; ok {
-					ar.Refs = append(ar.Refs, ref)
-				}
-				if et, ok := es[ckey]; ok {
-					ar.entities = append(ar.entities, et)
-				}
-				if vo, ok := vos[ckey]; ok {
-					ar.vos = append(ar.vos, vo)
-				}
-			}
-		}
-
-		if entity, ok := es[key]; ok {
-			for ckey := range g.Edges.SrcToDsts[key] {
-				if et, ok := es[ckey]; ok {
-					entity.entities = append(entity.entities, et)
-				}
-				if vo, ok := vos[ckey]; ok {
-					entity.vos = append(entity.vos, vo)
-				}
-			}
-		}
-		if repo, ok := repos[key]; ok {
-			for ckey := range g.Edges.SrcToDsts[key] {
-				repo.For = ars[ckey]
-			}
-		}
+		subDomain.addRelations(key, edgeKeys)
 	}
 
 	return &Model{SubDomains: subDomains}

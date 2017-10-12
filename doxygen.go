@@ -14,6 +14,12 @@ type CodeDotFileParseResult struct {
 	vos   map[string]*ValueObject
 }
 
+type Relation struct {
+	key string
+	edgesKey string
+	edges     []*gographviz.Edge
+}
+
 var codeArs = make(map[string]*Entity)
 var repos = make(map[string]*Repository)
 var providers = make(map[string]*Provider)
@@ -78,10 +84,10 @@ func (result *CodeDotFileParseResult) parseAggregateRoot(key string) {
 				ar.Refs = append(ar.Refs, ref)
 			}
 			if et, ok := result.es[edge]; ok {
-				ar.entities = append(ar.entities, et)
+				ar.Entities = append(ar.Entities, et)
 			}
 			if vo, ok := result.vos[edge]; ok {
-				ar.vos = append(ar.vos, vo)
+				ar.VOs = append(ar.VOs, vo)
 			}
 		}
 	}
@@ -91,10 +97,10 @@ func (result *CodeDotFileParseResult) parseEntity(key string) {
 	if entity, ok := result.es[key]; ok {
 		for _, edge := range result.edges[key] {
 			if et, ok := result.es[edge]; ok {
-				entity.entities = append(entity.entities, et)
+				entity.Entities = append(entity.Entities, et)
 			}
 			if vo, ok := result.vos[edge]; ok {
-				entity.vos = append(entity.vos, vo)
+				entity.VOs = append(entity.VOs, vo)
 			}
 		}
 	}
@@ -154,7 +160,6 @@ func parseDotFile(codeDotfile string) *CodeDotFileParseResult {
 		es:    make(map[string]*Entity),
 		vos:   make(map[string]*ValueObject),
 	}
-
 	for key := range g.Edges.DstToSrcs {
 		for edgesKey := range g.Edges.DstToSrcs[key] {
 			for _, edge := range g.Edges.DstToSrcs[key][edgesKey] {
