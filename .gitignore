@@ -24,3 +24,5 @@ tequila
 .idea
 
 .DS_Store
+
+build/
