@@ -1,7 +1,7 @@
 #ifndef BC_DEMO__REPO_H__
 #define BC_DEMO__REPO_H__
 
-#include "model.h"
+#include "domain/model.h"
 #include <vector>
 
 using namespace domain;

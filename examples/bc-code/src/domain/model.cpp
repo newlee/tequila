@@ -1,4 +1,4 @@
-#include "model.h"
+#include "domain/model.h"
 
 using namespace domain;
 
