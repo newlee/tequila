@@ -21,6 +21,11 @@ void Cargo::Delay(int days)
 	this->delivery = new Delivery(after + days);
 }
 
+int Cargo::afterDays()
+{
+	return this->delivery->AfterDays;
+}
+
 Delivery::Delivery(int afterDays)
 	:AfterDays(afterDays)
 {

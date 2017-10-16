@@ -22,5 +22,6 @@ void CargoService::Delay(int id, int days)
     if(cargo != NULL) {
         cargo->Delay(days);
         cargoRepository_->Save(cargo);
+        this->cargoProvider_->Confirm(cargo);
     }
 }

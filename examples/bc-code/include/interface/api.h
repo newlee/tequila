@@ -10,6 +10,7 @@ namespace api {
 struct Api {
     Api(CargoService*);
     void CreateCargo(CreateCargoMsg* msg);
+    void Delay(int cargoId, int days);
 
 private:
     CargoService* cargoService_;

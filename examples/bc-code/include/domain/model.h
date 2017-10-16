@@ -27,7 +27,6 @@ struct Provider
 struct Delivery: ValueObject
 {
 	Delivery(int);
-
 	int AfterDays;
 };
 
@@ -36,9 +35,13 @@ struct Cargo: AggregateRoot
 	Cargo(Delivery*, int);
 	~Cargo();
 	void Delay(int);
+	int afterDays();
 private:
 	Delivery* delivery;
 };
 
+struct CargoDelayed {
+	int CargoId;
+};
 }
 #endif
