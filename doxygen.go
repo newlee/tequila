@@ -15,9 +15,9 @@ type CodeDotFileParseResult struct {
 }
 
 type Relation struct {
-	key string
+	key      string
 	edgesKey string
-	edges     []*gographviz.Edge
+	edges    []*gographviz.Edge
 }
 
 var codeArs = make(map[string]*Entity)
@@ -31,7 +31,7 @@ func isAggregateRoot(className string) bool {
 }
 func (result *CodeDotFileParseResult) parse(edge *gographviz.Edge, nodes map[string]string) {
 	dst := nodes[edge.Dst]
-	src:= nodes[edge.Src]
+	src := nodes[edge.Src]
 
 	if edge.Attrs["style"] == "\"dashed\"" {
 		if _, ok := result.edges[dst]; !ok {
@@ -125,7 +125,6 @@ func callDotFiles(codeDir string) []string {
 	return callDotFiles
 }
 
-
 func parseDotFile(codeDotfile string) *CodeDotFileParseResult {
 	fbuf, _ := ioutil.ReadFile(codeDotfile)
 	g, _ := gographviz.Read(fbuf)
@@ -168,7 +167,7 @@ func doCallRelation(src string, dst string) {
 	}
 }
 
-func getMethodName(fullMethodName, split string, index int) (string,string, bool) {
+func getMethodName(fullMethodName, split string, index int) (string, string, bool) {
 	if strings.Contains(fullMethodName, split) {
 		tmp := strings.Split(fullMethodName, split)
 		methodName := tmp[len(tmp)-index]
@@ -177,9 +176,9 @@ func getMethodName(fullMethodName, split string, index int) (string,string, bool
 		if _, ok := subDomainMap[subDomain]; ok {
 			subDomainMap[subDomain] = append(subDomainMap[subDomain], methodName)
 		}
-		return methodName,subDomain, true
+		return methodName, subDomain, true
 	}
-	return fullMethodName,"", false
+	return fullMethodName, "", false
 }
 
 func nodes(g *gographviz.Graph, index int) map[string]string {
@@ -187,10 +186,10 @@ func nodes(g *gographviz.Graph, index int) map[string]string {
 	for _, node := range g.Nodes.Nodes {
 		fullMethodName := strings.Replace(node.Attrs["label"], "\"", "", 2)
 
-		if methodName,_,ok := getMethodName(fullMethodName,"::", index);ok{
+		if methodName, _, ok := getMethodName(fullMethodName, "::", index); ok {
 			nodes[node.Name] = methodName
-		}else{
-			nodes[node.Name],_, _ = getMethodName(fullMethodName,".", index)
+		} else {
+			nodes[node.Name], _, _ = getMethodName(fullMethodName, ".", index)
 		}
 	}
 	return nodes

@@ -1,0 +1,21 @@
+digraph g {
+	node[style = filled, color = orange];
+
+	subgraph cluster1 {
+		label=interface
+		style=filled
+		color=turquoise
+		node [style=filled,color=white,shape=box];
+		Api
+		CreateCargoMsg
+	}
+
+	subgraph cluster2 {
+		label="service layer"
+		style=filled
+		color=turquoise
+		node [style=filled,color=white,shape=box];
+		CargoService
+	}
+	
+}
