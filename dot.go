@@ -45,7 +45,7 @@ func (model *Model) Validate() bool {
 }
 
 func (model *Model) Compare(other *Model) bool {
-	if len(model.SubDomains) != len(model.SubDomains) {
+	if len(model.SubDomains) != len(other.SubDomains) {
 		return false
 	}
 
