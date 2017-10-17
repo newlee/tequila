@@ -106,16 +106,21 @@ func ParseCodeDir(codeDir string) *FullGraph {
 
 	for nodeKey := range fullGraph.NodeList {
 		tmp := strings.Split(nodeKey, "::")
-
-		if _, ok := layerMap[tmp[0]]; !ok {
-			layerMap[tmp[0]] = make([]string, 0)
+		packageName := tmp[0];
+		if len(tmp) > 2 {
+			packageName = strings.Join(tmp[0:len(tmp) - 1], "::")
+			fmt.Println(packageName)
 		}
-		layerMap[tmp[0]] = append(layerMap[tmp[0]], nodeKey)
+
+		if _, ok := layerMap[packageName]; !ok {
+			layerMap[packageName] = make([]string, 0)
+		}
+		layerMap[packageName] = append(layerMap[packageName], nodeKey)
 	}
 
 	for layer := range layerMap {
 		layerAttr := make(map[string]string)
-		layerAttr["label"] = layer
+		layerAttr["label"] = "\"" + layer + "\""
 		layerName := "cluster" + strconv.Itoa(layerIndex)
 		graph.AddSubGraph("G", layerName, layerAttr)
 		layerIndex++
@@ -131,7 +136,6 @@ func ParseCodeDir(codeDir string) *FullGraph {
 
 	for key := range fullGraph.RelationList {
 		relation := fullGraph.RelationList[key]
-		fmt.Println(relation)
 
 		if nodes[relation.From] != "" {
 			fromNode := nodes[relation.From]
