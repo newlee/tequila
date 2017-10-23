@@ -3,7 +3,7 @@
 using namespace api;
 using namespace services;
 
-Api::Api(CargoService*cargoService)
+Api::Api(std::shared_ptr<CargoService> cargoService)
     :cargoService_(cargoService)
 {
 }

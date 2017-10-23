@@ -2,6 +2,9 @@
 #include "../include/interface/api.h"
 #include "../include/services/service.h"
 #include "../include/repositories/repository.h"
+#include "Hypodermic/ContainerBuilder.h"
+
+using namespace Hypodermic;
 
 struct StubCargoProvider : services::CargoProvider{
     int cargo_id;
@@ -12,14 +15,21 @@ struct StubCargoProvider : services::CargoProvider{
 static const int ID = 1;
 static const int AFTER_DAYS = 10;
 
-StubCargoProvider* provider = new StubCargoProvider();
+//StubCargoProvider* provider = new StubCargoProvider();
+auto provider = std::make_shared< StubCargoProvider >();
 
 api::Api* createApi()  {
-    repositories::CargoRepository* cargoRepo = new repositories::CargoRepository();
+    ContainerBuilder builder;
+    builder.registerType< CargoRepository >().singleInstance();
+    builder.registerInstance(provider).as<CargoProvider>();
+    builder.registerType< CargoService >().singleInstance();
+    builder.registerType<api::Api>().singleInstance();
 
-    services::CargoService* service = new services::CargoService(cargoRepo, provider);
-    api::Api* api = new api::Api(service);
-    return api;
+    auto container = builder.build();
+
+    std::shared_ptr<api::Api> api = container->resolve<api::Api>();
+
+    return api.get();
 }
 
 void createCargo(api::CreateCargoMsg* msg) {

@@ -2,12 +2,6 @@
 
 using namespace services;
 
-CargoService::CargoService(CargoRepository* cargoRepo, CargoProvider* cargoProvider)
-    :cargoRepository_(cargoRepo)
-    ,cargoProvider_(cargoProvider)
-{
-
-}
 
 void CargoService::Create(int id, int days)
 {
@@ -25,3 +19,4 @@ void CargoService::Delay(int id, int days)
         this->cargoProvider_->Confirm(cargo);
     }
 }
+

@@ -13,14 +13,18 @@ struct CargoProvider : Provider {
 };
 
 struct CargoService {
-    CargoService(CargoRepository* cargoRepo, CargoProvider* cargoProvider);
+    explicit CargoService(const std::shared_ptr<CargoRepository> cargoRepo, const std::shared_ptr<CargoProvider> cargoProvider)
+        :cargoRepository_(cargoRepo)
+        ,cargoProvider_(cargoProvider)
+    {
+
+    }
     void Create(int id, int days);
     void Delay(int id, int days);
 private:
-    CargoRepository* cargoRepository_;
-    CargoProvider* cargoProvider_;
+    std::shared_ptr<CargoRepository> cargoRepository_;
+    std::shared_ptr<CargoProvider> cargoProvider_;
 };
-
 
 }
 #endif //BC_DEMO_SERVICE_H
