@@ -9,7 +9,7 @@ import (
 )
 
 var _ = Describe("Viz", func() {
-	Context("Parse all graph dot files", func() {
+	Context("Parse all include dependencies", func() {
 		It("bc code", func() {
 			codeDir := "../examples/bc-code/html"
 			result := ParseCodeDir(codeDir)

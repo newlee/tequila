@@ -6,9 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	//"fmt"
 	"bufio"
-	"fmt"
 	"strconv"
 )
 
@@ -25,13 +23,17 @@ type FullGraph struct {
 
 var fullGraph *FullGraph
 
-func parseRelation(edge *gographviz.Edge, nodes map[string]string) *Relation {
-	dst := nodes[edge.Dst]
-	src := nodes[edge.Src]
-	return &Relation{
-		From:  dst,
-		To:    src,
-		Style: edge.Attrs["style"],
+func parseRelation(edge *gographviz.Edge, nodes map[string]string)  {
+	if _,ok:=nodes[edge.Src]; ok {
+		dst := nodes[edge.Dst]
+		src := nodes[edge.Src]
+
+		relation := &Relation{
+			From:  dst,
+			To:    src,
+			Style: "\"solid\"",
+		}
+		fullGraph.RelationList[relation.From+relation.To] = relation
 	}
 }
 
@@ -40,18 +42,30 @@ func parseDotFile(codeDotfile string) {
 	g, _ := gographviz.Read(fbuf)
 	nodes := make(map[string]string)
 	for _, node := range g.Nodes.Nodes {
+
 		fullMethodName := strings.Replace(node.Attrs["label"], "\"", "", 2)
-		if strings.Contains(fullMethodName, "::") {
-			methodName := strings.Replace(fullMethodName, "\\l", "", -1)
-			fullGraph.NodeList[methodName] = methodName
-			nodes[node.Name] = methodName
+		if strings.Contains(fullMethodName, "_test") {
+			continue
 		}
+
+		if strings.Contains(fullMethodName, "Test") {
+			continue
+		}
+
+		if strings.Contains(fullMethodName, "/Library/") {
+			continue
+		}
+
+		methodName := strings.Replace(fullMethodName, "\\l", "", -1)
+		methodName = strings.Replace(methodName, "src/", "", -1)
+		methodName = strings.Replace(methodName, "include/", "", -1)
+		fullGraph.NodeList[methodName] = methodName
+		nodes[node.Name] = methodName
 	}
 	for key := range g.Edges.DstToSrcs {
 		for edgesKey := range g.Edges.DstToSrcs[key] {
 			for _, edge := range g.Edges.DstToSrcs[key][edgesKey] {
-				relation := parseRelation(edge, nodes)
-				fullGraph.RelationList[relation.From+relation.To] = relation
+				parseRelation(edge, nodes)
 			}
 		}
 	}
@@ -61,21 +75,14 @@ func codeDotFiles(codeDir string) []string {
 	codeDotFiles := make([]string, 0)
 	filepath.Walk(codeDir, func(path string, fi os.FileInfo, err error) error {
 		if strings.HasSuffix(path, ".dot") {
-			if strings.HasSuffix(path, "class_domain_1_1_aggregate_root__coll__graph.dot") {
-				return nil
-			}
-			if strings.Contains(path, "inherit") {
-				return nil
-			}
-			if strings.HasSuffix(path, "_cgraph.dot") {
-				return nil
-			}
+			if strings.HasSuffix(path, "_dep__incl.dot") {
+				//return nil
+				if strings.Contains(path, "_test_") {
+					return nil
+				}
 
-			if strings.HasSuffix(path, "_incl.dot") {
-				return nil
+				codeDotFiles = append(codeDotFiles, path)
 			}
-
-			codeDotFiles = append(codeDotFiles, path)
 		}
 
 		return nil
@@ -105,11 +112,13 @@ func ParseCodeDir(codeDir string) *FullGraph {
 	layerMap := make(map[string][]string)
 
 	for nodeKey := range fullGraph.NodeList {
-		tmp := strings.Split(nodeKey, "::")
-		packageName := tmp[0];
+		tmp := strings.Split(nodeKey, "/")
+		packageName := tmp[0]
+		if packageName == nodeKey {
+			packageName = "main"
+		}
 		if len(tmp) > 2 {
-			packageName = strings.Join(tmp[0:len(tmp) - 1], "::")
-			fmt.Println(packageName)
+			packageName = strings.Join(tmp[0:len(tmp)-1], "/")
 		}
 
 		if _, ok := layerMap[packageName]; !ok {
@@ -126,7 +135,8 @@ func ParseCodeDir(codeDir string) *FullGraph {
 		layerIndex++
 		for _, node := range layerMap[layer] {
 			attrs := make(map[string]string)
-			attrs["label"] = "\"" + node + "\""
+			fileName := strings.Replace(node, layer + "/", "", -1)
+			attrs["label"] = "\"" + fileName + "\""
 			attrs["shape"] = "box"
 			graph.AddNode(layerName, "node"+strconv.Itoa(nodeIndex), attrs)
 			nodes[node] = "node" + strconv.Itoa(nodeIndex)
@@ -140,17 +150,23 @@ func ParseCodeDir(codeDir string) *FullGraph {
 		if nodes[relation.From] != "" {
 			fromNode := nodes[relation.From]
 			toNode := nodes[relation.To]
-
 			attrs := make(map[string]string)
-
+			if strings.HasSuffix(relation.From, ".m") {
+				toName := strings.Replace(relation.From, ".m", "", -1)
+				if !strings.Contains(relation.To, toName) {
+					relation.Style = "\"dashed\""
+				}
+			}
 			attrs["style"] = relation.Style
+
 			graph.AddEdge(fromNode, toNode, true, attrs)
+
 		}
 	}
 
-	f, _ := os.Create("../examples/bc-code/dep.dot")
+	f, _ := os.Create("dep.dot")
 	w := bufio.NewWriter(f)
-	w.WriteString(graph.String())
+	w.WriteString("di" + graph.String())
 	w.Flush()
 	return fullGraph
 
