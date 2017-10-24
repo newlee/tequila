@@ -19,11 +19,6 @@ struct ValueObject
 
 };
 
-struct Provider
-{
-
-};
-
 struct Delivery: ValueObject
 {
 	Delivery(int);

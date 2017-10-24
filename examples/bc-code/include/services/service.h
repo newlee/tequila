@@ -1,13 +1,16 @@
 #ifndef BC_DEMO_SERVICE_H
 #define BC_DEMO_SERVICE_H
 
-#include "domain/model.h"
 #include "repositories/repository.h"
 
-using namespace domain;
 using namespace repositories;
 
 namespace services {
+struct Provider
+{
+
+};
+
 struct CargoProvider : Provider {
     virtual void Confirm(Cargo* cargo){};
 };

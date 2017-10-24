@@ -1,12 +1,10 @@
 #include <iostream>
-#include "domain/model.h"
 #include "repositories/repository.h"
 #include "services/service.h"
 #include "gateways/gateway.h"
 #include "interface/api.h"
 #include "Hypodermic/ContainerBuilder.h"
 
-using namespace domain;
 using namespace repositories;
 using namespace services;
 using namespace gateways;
