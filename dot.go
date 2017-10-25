@@ -68,6 +68,7 @@ func (subDomain *SubDomain) Validate() bool {
 			}
 		}
 	}
+
 	return true
 }
 
@@ -84,12 +85,12 @@ func (subDomain *SubDomain) Compare(other *SubDomain) bool {
 			return false
 		}
 	}
-	for key := range subDomain.Repos {
-		repo := subDomain.Repos[key]
-		if !repo.Compare(other.Repos[key]) {
-			return false
-		}
-	}
+	//for key := range subDomain.Repos {
+	//	repo := subDomain.Repos[key]
+	//	if !repo.Compare(other.Repos[key]) {
+	//		return false
+	//	}
+	//}
 	return true
 }
 

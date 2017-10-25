@@ -3,8 +3,8 @@ digraph g {
 
 	Cargo[label="Cargo\l<AR>", comment=AR, shape=box]
 	Delivery[label="Delivery\l<VO>", comment=VO, shape=box, color=lightblue]
-	CargoRepo[label="CargoRepo", comment=Repo, shape=box, color=yellow]
+	CargoRepository[label="CargoRepository", comment=Repo, shape=box, color=yellow]
 	CargoProvider[label="CargoProvider", comment=Provider, shape=box, color=purple]
 	Cargo -> Delivery
-	CargoRepo -> Cargo[style="dashed"]
+	CargoRepository -> Cargo[style="dashed"]
 }
