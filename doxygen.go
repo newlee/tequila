@@ -37,16 +37,25 @@ func (result *CodeDotFileParseResult) parse(edge *gographviz.Edge, nodes map[str
 		if _, ok := result.edges[dst]; !ok {
 			result.edges[dst] = make([]string, 0)
 		}
-		result.edges[dst] = append(result.edges[dst], src)
+		haveSrc := false
+		for _, s := range result.edges[dst] {
+			if s == src {
+				haveSrc = true
+			}
+		}
+		if !haveSrc {
+			result.edges[dst] = append(result.edges[dst], src)
+		}
+
 	} else {
 		if !isAggregateRoot(dst) {
-			if strings.HasSuffix(src, "AggregateRoot") {
+			if asAggregateRoot(src) {
 				codeArs[dst] = &Entity{name: dst}
 			}
-			if strings.HasSuffix(src, "Entity") {
+			if asEntity(result, src) {
 				result.es[dst] = &Entity{name: dst}
 			}
-			if strings.HasSuffix(src, "ValueObject") {
+			if asValueObject(result,src) {
 				result.vos[dst] = &ValueObject{name: dst}
 			}
 			if strings.HasSuffix(src, "Repository") {
@@ -58,6 +67,42 @@ func (result *CodeDotFileParseResult) parse(edge *gographviz.Edge, nodes map[str
 		}
 
 	}
+}
+func asValueObject(result *CodeDotFileParseResult, src string) bool {
+	asValueObject := strings.HasSuffix(src, "ValueObject")
+	if !asValueObject {
+		for key := range result.vos {
+			if src == key {
+				return true
+			}
+		}
+	}
+
+	return asValueObject
+}
+func asEntity(result *CodeDotFileParseResult, src string) bool {
+	asEntity := strings.HasSuffix(src, "Entity")
+	if !asEntity {
+		for key := range result.es {
+			if src == key {
+				return true
+			}
+		}
+	}
+
+	return asEntity
+}
+func asAggregateRoot(src string) bool {
+	result := strings.HasSuffix(src, "AggregateRoot")
+	if !result {
+		for key := range codeArs {
+			if src == key {
+				return true
+			}
+		}
+	}
+
+	return result
 }
 
 func (result *CodeDotFileParseResult) parseAggregateRoot(key string) {
@@ -93,16 +138,16 @@ func codeDotFiles(codeDir string) []string {
 	codeDotFiles := make([]string, 0)
 	filepath.Walk(codeDir, func(path string, fi os.FileInfo, err error) error {
 		if strings.HasSuffix(path, ".dot") {
+
 			if strings.HasSuffix(path, "class_domain_1_1_aggregate_root__coll__graph.dot") {
 				return nil
 			}
-			if strings.Contains(path, "inherit") {
+			if strings.Contains(path, "inherit_") {
 				return nil
 			}
 			if strings.HasSuffix(path, "_cgraph.dot") {
 				return nil
 			}
-
 			codeDotFiles = append(codeDotFiles, path)
 		}
 
@@ -142,6 +187,14 @@ func parseDotFile(codeDotfile string) *CodeDotFileParseResult {
 			}
 		}
 	}
+	for key := range g.Edges.DstToSrcs {
+		for edgesKey := range g.Edges.DstToSrcs[key] {
+			for _, edge := range g.Edges.DstToSrcs[key][edgesKey] {
+				result.parse(edge, nodes)
+			}
+		}
+	}
+
 	return result
 }
 

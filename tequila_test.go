@@ -226,4 +226,19 @@ var _ = Describe("Tequila", func() {
 
 		})
 	})
+
+	Context("Compare when have inheritance tree", func() {
+
+		It("inheritance tree", func() {
+			codeDir := "examples/inheritance-tree-code/html"
+			codeArs := ParseCodeDir(codeDir, subs).SubDomains[subDomainName].ARs
+
+			Expect(len(codeArs)).Should(Equal(2))
+			Expect(len(codeArs[aggregateAName].Entities)).Should(Equal(2))
+			Expect(len(codeArs[aggregateAName].VOs)).Should(Equal(1))
+			entityB := codeArs[aggregateAName].Entities[0]
+			Expect(len(entityB.VOs)).Should(Equal(1))
+
+		})
+	})
 })
