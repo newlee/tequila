@@ -200,6 +200,14 @@ func (entity *Entity) findEntity(name string) (*Entity, bool) {
 	return nil, false
 }
 
+func (entity *Entity) appendVO(vo *ValueObject) {
+	for _, item := range entity.VOs {
+		if item.name == vo.name {
+			return
+		}
+	}
+	entity.VOs = append(entity.VOs, vo)
+}
 func (entity *Entity) Compare(other *Entity) bool {
 	if len(entity.Entities) != len(other.Entities) {
 		return false

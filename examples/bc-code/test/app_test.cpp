@@ -5,6 +5,9 @@
 #include "Hypodermic/ContainerBuilder.h"
 
 using namespace Hypodermic;
+using namespace domain;
+using namespace repositories;
+using namespace services;
 
 struct StubCargoProvider : services::CargoProvider{
     int cargo_id;

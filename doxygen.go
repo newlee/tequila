@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/awalterschulze/gographviz"
+	. "github.com/newlee/tequila/dot"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -14,131 +15,19 @@ type CodeDotFileParseResult struct {
 	vos   map[string]*ValueObject
 }
 
-type Relation struct {
-	key      string
-	edgesKey string
-	edges    []*gographviz.Edge
-}
-
 var codeArs = make(map[string]*Entity)
 var repos = make(map[string]*Repository)
 var providers = make(map[string]*Provider)
 var subDomainMap = make(map[string][]string)
 
 func isAggregateRoot(className string) bool {
-	tmp := strings.Split(className, "::")
-	return tmp[len(tmp)-1] == "AggregateRoot"
-}
-func (result *CodeDotFileParseResult) parse(edge *gographviz.Edge, nodes map[string]string) {
-	dst := nodes[edge.Dst]
-	src := nodes[edge.Src]
-
-	if edge.Attrs["style"] == "\"dashed\"" {
-		if _, ok := result.edges[dst]; !ok {
-			result.edges[dst] = make([]string, 0)
-		}
-		haveSrc := false
-		for _, s := range result.edges[dst] {
-			if s == src {
-				haveSrc = true
-			}
-		}
-		if !haveSrc {
-			result.edges[dst] = append(result.edges[dst], src)
-		}
-
-	} else {
-		if !isAggregateRoot(dst) {
-			if asAggregateRoot(src) {
-				codeArs[dst] = &Entity{name: dst}
-			}
-			if asEntity(result, src) {
-				result.es[dst] = &Entity{name: dst}
-			}
-			if asValueObject(result,src) {
-				result.vos[dst] = &ValueObject{name: dst}
-			}
-			if strings.HasSuffix(src, "Repository") {
-				repos[dst] = &Repository{name: dst}
-			}
-			if strings.HasSuffix(src, "Provider") {
-				providers[dst] = &Provider{name: dst}
-			}
-		}
-
-	}
-}
-func asValueObject(result *CodeDotFileParseResult, src string) bool {
-	asValueObject := strings.HasSuffix(src, "ValueObject")
-	if !asValueObject {
-		for key := range result.vos {
-			if src == key {
-				return true
-			}
-		}
-	}
-
-	return asValueObject
-}
-func asEntity(result *CodeDotFileParseResult, src string) bool {
-	asEntity := strings.HasSuffix(src, "Entity")
-	if !asEntity {
-		for key := range result.es {
-			if src == key {
-				return true
-			}
-		}
-	}
-
-	return asEntity
-}
-func asAggregateRoot(src string) bool {
-	result := strings.HasSuffix(src, "AggregateRoot")
-	if !result {
-		for key := range codeArs {
-			if src == key {
-				return true
-			}
-		}
-	}
-
-	return result
-}
-
-func (result *CodeDotFileParseResult) parseAggregateRoot(key string) {
-	if ar, ok := codeArs[key]; ok {
-		for _, edge := range result.edges[key] {
-			if ref, ok := codeArs[edge]; ok {
-				ar.Refs = append(ar.Refs, ref)
-			}
-			if et, ok := result.es[edge]; ok {
-				ar.Entities = append(ar.Entities, et)
-			}
-			if vo, ok := result.vos[edge]; ok {
-				ar.VOs = append(ar.VOs, vo)
-			}
-		}
-	}
-}
-
-func (result *CodeDotFileParseResult) parseEntity(key string) {
-	if entity, ok := result.es[key]; ok {
-		for _, edge := range result.edges[key] {
-			if et, ok := result.es[edge]; ok {
-				entity.Entities = append(entity.Entities, et)
-			}
-			if vo, ok := result.vos[edge]; ok {
-				entity.VOs = append(entity.VOs, vo)
-			}
-		}
-	}
+	return className == "AggregateRoot"
 }
 
 func codeDotFiles(codeDir string) []string {
 	codeDotFiles := make([]string, 0)
 	filepath.Walk(codeDir, func(path string, fi os.FileInfo, err error) error {
 		if strings.HasSuffix(path, ".dot") {
-
 			if strings.HasSuffix(path, "class_domain_1_1_aggregate_root__coll__graph.dot") {
 				return nil
 			}
@@ -170,40 +59,106 @@ func callDotFiles(codeDir string) []string {
 	return callDotFiles
 }
 
-func parseDotFile(codeDotfile string) *CodeDotFileParseResult {
-	fbuf, _ := ioutil.ReadFile(codeDotfile)
-	g, _ := gographviz.Read(fbuf)
 
-	nodes := nodes(g, 1)
-	result := &CodeDotFileParseResult{
+func isAR(node *Node) bool {
+	return node.IsIt("AggregateRoot")
+}
+func isEntity(node *Node) bool {
+	return node.IsIt("Entity")
+}
+
+func isValueObject(node *Node) bool {
+	return node.IsIt("ValueObject")
+}
+func isRepo(node *Node) bool {
+	return node.IsIt("Repository")
+}
+
+func (result *CodeDotFileParseResult) parseRelation(node *Node) {
+	src := node.Name
+	if !isAggregateRoot(src) {
+		if isAR(node) {
+			codeArs[src] = &Entity{name: src}
+			for _, relation := range node.DstNodes {
+				result.parseRelation(relation.Node)
+			}
+			return
+		}
+		if isEntity(node) {
+			result.es[src] = &Entity{name: src}
+		}
+		if isValueObject(node) {
+			result.vos[src] = &ValueObject{name: src}
+		}
+		if isRepo(node)  {
+			repos[src] = &Repository{name: src}
+		}
+		if strings.HasSuffix(src, "Provider") {
+			providers[src] = &Provider{name: src}
+		}
+	}
+
+	for _, relation := range node.DstNodes {
+		result.parseRelation(relation.Node)
+	}
+}
+func (result *CodeDotFileParseResult) parseAR(node *Node) {
+	if ar, ok := codeArs[node.Name]; ok {
+		for _, relation := range node.DstNodes {
+			dst := relation.Node.Name
+
+			if ref, ok := codeArs[dst]; ok {
+				ar.Refs = append(ar.Refs, ref)
+			}
+			if et, ok := result.es[dst]; ok {
+				ar.Entities = append(ar.Entities, et)
+			}
+			if vo, ok := result.vos[dst]; ok {
+
+				ar.VOs = append(ar.VOs, vo)
+			}
+		}
+	}
+	
+	for _, relation := range node.DstNodes {
+		result.parseAR(relation.Node)
+	}
+}
+
+func (result *CodeDotFileParseResult) parseEntity(node *Node) {
+	if entity, ok := result.es[node.Name]; ok {
+		for _, relation := range node.DstNodes {
+			dst := relation.Node.Name
+			if et, ok := result.es[dst]; ok {
+				entity.Entities = append(entity.Entities, et)
+			}
+			if vo, ok := result.vos[dst]; ok {
+				entity.appendVO(vo)
+			}
+		}
+	}
+	for _, relation := range node.DstNodes {
+		result.parseEntity(relation.Node)
+	}
+}
+func subDomainCallback(subDomain, methodName string) {
+	if _, ok := subDomainMap[subDomain]; ok {
+		subDomainMap[subDomain] = append(subDomainMap[subDomain], methodName)
+	}
+}
+func parseCode(codeDotfile string) {
+	node := ParseDoxygenFile(codeDotfile)
+	node.RemoveNS(subDomainCallback)
+	codeDotFileParseResult := &CodeDotFileParseResult{
 		edges: make(map[string][]string),
 		es:    make(map[string]*Entity),
 		vos:   make(map[string]*ValueObject),
 	}
-	for key := range g.Edges.DstToSrcs {
-		for edgesKey := range g.Edges.DstToSrcs[key] {
-			for _, edge := range g.Edges.DstToSrcs[key][edgesKey] {
-				result.parse(edge, nodes)
-			}
-		}
-	}
-	for key := range g.Edges.DstToSrcs {
-		for edgesKey := range g.Edges.DstToSrcs[key] {
-			for _, edge := range g.Edges.DstToSrcs[key][edgesKey] {
-				result.parse(edge, nodes)
-			}
-		}
-	}
 
-	return result
-}
+	codeDotFileParseResult.parseRelation(node)
 
-func parseCode(codeDotfile string) {
-	codeDotFileParseResult := parseDotFile(codeDotfile)
-	for key := range codeDotFileParseResult.edges {
-		codeDotFileParseResult.parseAggregateRoot(key)
-		codeDotFileParseResult.parseEntity(key)
-	}
+	codeDotFileParseResult.parseAR(node)
+	codeDotFileParseResult.parseEntity(node)
 }
 
 func doCallRelation(src string, dst string) {

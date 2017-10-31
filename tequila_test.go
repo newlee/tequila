@@ -237,7 +237,8 @@ var _ = Describe("Tequila", func() {
 			Expect(len(codeArs[aggregateAName].Entities)).Should(Equal(2))
 			Expect(len(codeArs[aggregateAName].VOs)).Should(Equal(1))
 			entityB := codeArs[aggregateAName].Entities[0]
-			Expect(len(entityB.VOs)).Should(Equal(1))
+			entityC := codeArs[aggregateAName].Entities[1]
+			Expect(len(entityB.VOs) + len(entityC.VOs)).Should(Equal(1))
 
 		})
 	})

@@ -1,10 +1,10 @@
 package main_test
 
 import (
+	"fmt"
 	. "github.com/newlee/tequila"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"fmt"
 )
 
 var _ = Describe("Tequila", func() {
@@ -16,9 +16,8 @@ var _ = Describe("Tequila", func() {
 
 			codeDir := "examples/bc-code/html"
 			codeModel := ParseCodeDir(codeDir, make([]string, 0))
-			fmt.Println(codeModel.SubDomains["subdomain"].Providers)
+			fmt.Println(len(codeModel.SubDomains["subdomain"].Repos))
 			Expect(dddModel.Compare(codeModel)).Should(Equal(true))
-
 		})
 	})
 

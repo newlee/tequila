@@ -2,11 +2,11 @@
 #define BC_DEMO__REPO_H__
 
 #include "domain/model.h"
-#include <vector>
-
-using namespace domain;
+//#include <vector>
 
 namespace repositories {
+using namespace domain;
+
 struct Repository
 {
 

@@ -10,6 +10,7 @@ using namespace services;
 using namespace gateways;
 using namespace Hypodermic;
 
+
 int main(int argc, char *argv[])
 {
     ContainerBuilder builder;
@@ -30,3 +31,6 @@ int main(int argc, char *argv[])
     std::cout<< cargoRepo->FindById(1)->getId()<<"\n";
     return 0;
 }
+
+// Add this code snippet just for doxygen...
+namespace std { template<class T> class shared_ptr { T *dummy_for_doxygen; }; }

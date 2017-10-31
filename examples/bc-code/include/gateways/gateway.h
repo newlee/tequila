@@ -3,9 +3,9 @@
 
 #include "services/service.h"
 
+namespace gateways {
 using namespace services;
 
-namespace gateways {
 struct CargoProviderImpl: CargoProvider
 {
     virtual void Confirm(Cargo *cargo) override;

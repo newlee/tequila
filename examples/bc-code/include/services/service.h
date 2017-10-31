@@ -3,9 +3,9 @@
 
 #include "repositories/repository.h"
 
+namespace services {
 using namespace repositories;
 
-namespace services {
 struct Provider
 {
 

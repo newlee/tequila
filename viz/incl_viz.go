@@ -1,13 +1,13 @@
 package viz
 
 import (
+	"bufio"
 	"github.com/awalterschulze/gographviz"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
-	"bufio"
 	"strconv"
+	"strings"
 )
 
 type Relation struct {
@@ -23,8 +23,8 @@ type FullGraph struct {
 
 var fullGraph *FullGraph
 
-func parseRelation(edge *gographviz.Edge, nodes map[string]string)  {
-	if _,ok:=nodes[edge.Src]; ok {
+func parseRelation(edge *gographviz.Edge, nodes map[string]string) {
+	if _, ok := nodes[edge.Src]; ok {
 		dst := nodes[edge.Dst]
 		src := nodes[edge.Src]
 
@@ -135,7 +135,7 @@ func ParseCodeDir(codeDir string) *FullGraph {
 		layerIndex++
 		for _, node := range layerMap[layer] {
 			attrs := make(map[string]string)
-			fileName := strings.Replace(node, layer + "/", "", -1)
+			fileName := strings.Replace(node, layer+"/", "", -1)
 			attrs["label"] = "\"" + fileName + "\""
 			attrs["shape"] = "box"
 			graph.AddNode(layerName, "node"+strconv.Itoa(nodeIndex), attrs)

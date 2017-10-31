@@ -21,6 +21,12 @@ void Cargo::Delay(int days)
 	this->delivery = new Delivery(after + days);
 }
 
+void Cargo::AddProduct(int productId)
+{
+	Product* product = new Product(productId);
+	this->product_list.push_back(product);
+}
+
 int Cargo::afterDays()
 {
 	return this->delivery->AfterDays;
@@ -30,4 +36,9 @@ Delivery::Delivery(int afterDays)
 	:AfterDays(afterDays)
 {
 
+}
+
+Product::Product(int id)
+    :productId(id)
+{
 }
