@@ -5,10 +5,10 @@ import (
 )
 
 func main() {
-	dotFile := "examples/step2-problem.dot"
+	dotFile := "examples/cargo-problem.dot"
 	dddModel := Parse(dotFile)
 
-	codeDir := "examples/step2-code/html"
+	codeDir := "examples/bc-code/html"
 	codeModel := ParseCodeDir(codeDir, make([]string, 0))
 	fmt.Println(dddModel.Compare(codeModel))
 }

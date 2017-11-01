@@ -8,12 +8,22 @@
 * install doxygen(http://www.stack.nl/~dimitri/doxygen/)
 
 ### Example:
-* DDD Model(![dot file](/examples/step2-problem.dot))
+* DDD Model(![dot file](/examples/cargo-problem.dot))
 
-![](https://rawgit.com/newlee/tequila/master/examples/subdomain.png)
+![](https://rawgit.com/newlee/tequila/master/examples/cargo-problem.png)
 
-* ![Code](/examples/step2-code/code.h)
-* ![Doxygen File](/examples/step2-code/Doxyfile)
+* ![Code](/examples/bc-code)
+* ![Doxygen File](/examples/bc-code/Doxyfile)
+
+### Features Done
+* DDD model validate
+* Cpp code check with DDD model
+* Inherit support
+* Include dependencies visualization
+
+### Features TODO
+* Output detail result for cpp code check
+* Cpp code check with DDD solution domain
 
 ### Build & Run Cpp example:
 * generate doxygen dot files:
