@@ -10,7 +10,6 @@ type Entity struct {
 	Entities     []*Entity
 	VOs          []*ValueObject
 	Refs         []*Entity
-	callEntities []*Entity
 }
 
 type ValueObject struct {

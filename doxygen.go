@@ -7,10 +7,9 @@ import (
 	"strings"
 )
 
-type CodeDotFileParseResult struct {
-	edges map[string][]string
-	es    map[string]*Entity
-	vos   map[string]*ValueObject
+type parseResult struct {
+	es  map[string]*Entity
+	vos map[string]*ValueObject
 }
 
 var codeArs = make(map[string]*Entity)
@@ -58,17 +57,22 @@ func isRepo(node *Node) bool {
 	return node.IsIt("Repository")
 }
 
-func (result *CodeDotFileParseResult) parseRelation(node *Node) {
+func (result *parseResult) parseNode(node *Node, todo func(*Node, *parseResult)) *parseResult {
+	todo(node, result)
+	for _, relation := range node.DstNodes {
+		result.parseNode(relation.Node, todo)
+	}
+	return result
+}
+
+func parseRelation(node *Node, result *parseResult) {
 	src := node.Name
 	if !isAggregateRoot(src) {
-		if isAR(node) {
+		isAr := isAR(node)
+		if isAr {
 			codeArs[src] = &Entity{name: src}
-			for _, relation := range node.DstNodes {
-				result.parseRelation(relation.Node)
-			}
-			return
 		}
-		if isEntity(node) {
+		if isEntity(node) && !isAr {
 			result.es[src] = &Entity{name: src}
 		}
 		if isValueObject(node) {
@@ -81,12 +85,9 @@ func (result *CodeDotFileParseResult) parseRelation(node *Node) {
 			providers[src] = &Provider{name: src}
 		}
 	}
-
-	for _, relation := range node.DstNodes {
-		result.parseRelation(relation.Node)
-	}
 }
-func (result *CodeDotFileParseResult) parseAR(node *Node) {
+
+func parseAR(node *Node, result *parseResult) {
 	if ar, ok := codeArs[node.Name]; ok {
 		for _, relation := range node.DstNodes {
 			dst := relation.Node.Name
@@ -98,18 +99,13 @@ func (result *CodeDotFileParseResult) parseAR(node *Node) {
 				ar.Entities = append(ar.Entities, et)
 			}
 			if vo, ok := result.vos[dst]; ok {
-
 				ar.VOs = append(ar.VOs, vo)
 			}
 		}
 	}
-
-	for _, relation := range node.DstNodes {
-		result.parseAR(relation.Node)
-	}
 }
 
-func (result *CodeDotFileParseResult) parseEntity(node *Node) {
+func parseEntity(node *Node, result *parseResult) {
 	if entity, ok := result.es[node.Name]; ok {
 		for _, relation := range node.DstNodes {
 			dst := relation.Node.Name
@@ -121,22 +117,15 @@ func (result *CodeDotFileParseResult) parseEntity(node *Node) {
 			}
 		}
 	}
-	for _, relation := range node.DstNodes {
-		result.parseEntity(relation.Node)
-	}
 }
-func (result *CodeDotFileParseResult) parseRepo(node *Node) {
+func parseRepo(node *Node, result *parseResult) {
 	if repo, ok := repos[node.Name]; ok {
 		for _, relation := range node.DstNodes {
 			dst := relation.Node.Name
-
 			if ar, ok := codeArs[dst]; ok {
 				repo.For = ar
 			}
 		}
-	}
-	for _, relation := range node.DstNodes {
-		result.parseRepo(relation.Node)
 	}
 }
 func subDomainCallback(subDomain, methodName string) {
@@ -147,17 +136,16 @@ func subDomainCallback(subDomain, methodName string) {
 func parseCode(codeDotfile string) {
 	node := ParseDoxygenFile(codeDotfile)
 	node.RemoveNS(subDomainCallback)
-	codeDotFileParseResult := &CodeDotFileParseResult{
-		edges: make(map[string][]string),
-		es:    make(map[string]*Entity),
-		vos:   make(map[string]*ValueObject),
+
+	codeDotFileParseResult := &parseResult{
+		es:  make(map[string]*Entity),
+		vos: make(map[string]*ValueObject),
 	}
 
-	codeDotFileParseResult.parseRelation(node)
-
-	codeDotFileParseResult.parseAR(node)
-	codeDotFileParseResult.parseEntity(node)
-	codeDotFileParseResult.parseRepo(node)
+	codeDotFileParseResult.parseNode(node, parseRelation).
+		parseNode(node, parseAR).
+		parseNode(node, parseEntity).
+		parseNode(node, parseRepo)
 }
 
 func ParseCodeDir(codeDir string, subs []string) *Model {
