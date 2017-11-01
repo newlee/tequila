@@ -12,7 +12,7 @@ var _ = Describe("Dot", func() {
 		It("api doxygen file", func() {
 			node := ParseDoxygenFile("test.dot")
 
-			Expect(node).Should(Equal("api::Api"))
+			Expect(node.Name).Should(Equal("api::Api"))
 			serviceNode := node.DstNodes[0].Node
 			Expect(serviceNode.Name).Should(Equal("services::CargoService"))
 
