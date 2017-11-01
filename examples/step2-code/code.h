@@ -91,6 +91,8 @@ public:
 		a->Init();
 		std::cout << "saved" << "\n";
 	};
+private:
+    std::vector<AggregateRootA*> ar_list;
 };
 
 }

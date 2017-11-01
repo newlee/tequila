@@ -64,7 +64,7 @@ func (node *Node) IsIt(it string) bool {
 }
 
 func (node *Node) isIt(it string) bool {
-	result := strings.HasSuffix(node.Name,it)
+	result := strings.HasSuffix(node.Name, it)
 	if !result {
 		for _, relation := range node.DstNodes {
 			if relation.Style != "\"dashed\"" {
@@ -103,7 +103,8 @@ func ParseDoxygenFile(file string) *Node {
 					&Relation{Node: nodeMap[dst], Style: edge.Attrs["style"]})
 
 				if strings.Contains(src, "\\<") &&
-					strings.Contains(edge.Attrs["label"], "dummy_for_doxygen") {
+					(strings.Contains(edge.Attrs["label"], "dummy_for_doxygen") ||
+						strings.Contains(edge.Attrs["label"], "elements")) {
 					genericRelationMap[src] = nodeMap[src]
 				}
 			}

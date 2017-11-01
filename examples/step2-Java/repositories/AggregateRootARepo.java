@@ -4,8 +4,8 @@ import domain.*;
 
 
 public class AggregateRootARepo extends Repository {
+    private AggregateRootA[] arList;
     public void save(AggregateRootA a){
-        a.init();
-        System.out.println("saved\n");		
+        System.out.println("saved\n");
 	};
 }

@@ -1,9 +1,7 @@
 package main
 
 import (
-	"github.com/awalterschulze/gographviz"
 	. "github.com/newlee/tequila/dot"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -46,20 +44,6 @@ func codeDotFiles(codeDir string) []string {
 	return codeDotFiles
 }
 
-func callDotFiles(codeDir string) []string {
-	callDotFiles := make([]string, 0)
-	filepath.Walk(codeDir, func(path string, fi os.FileInfo, err error) error {
-		if strings.HasSuffix(path, "_cgraph.dot") {
-			callDotFiles = append(callDotFiles, path)
-		}
-
-		return nil
-	})
-
-	return callDotFiles
-}
-
-
 func isAR(node *Node) bool {
 	return node.IsIt("AggregateRoot")
 }
@@ -90,7 +74,7 @@ func (result *CodeDotFileParseResult) parseRelation(node *Node) {
 		if isValueObject(node) {
 			result.vos[src] = &ValueObject{name: src}
 		}
-		if isRepo(node)  {
+		if isRepo(node) {
 			repos[src] = &Repository{name: src}
 		}
 		if strings.HasSuffix(src, "Provider") {
@@ -119,7 +103,7 @@ func (result *CodeDotFileParseResult) parseAR(node *Node) {
 			}
 		}
 	}
-	
+
 	for _, relation := range node.DstNodes {
 		result.parseAR(relation.Node)
 	}
@@ -141,6 +125,20 @@ func (result *CodeDotFileParseResult) parseEntity(node *Node) {
 		result.parseEntity(relation.Node)
 	}
 }
+func (result *CodeDotFileParseResult) parseRepo(node *Node) {
+	if repo, ok := repos[node.Name]; ok {
+		for _, relation := range node.DstNodes {
+			dst := relation.Node.Name
+
+			if ar, ok := codeArs[dst]; ok {
+				repo.For = ar
+			}
+		}
+	}
+	for _, relation := range node.DstNodes {
+		result.parseRepo(relation.Node)
+	}
+}
 func subDomainCallback(subDomain, methodName string) {
 	if _, ok := subDomainMap[subDomain]; ok {
 		subDomainMap[subDomain] = append(subDomainMap[subDomain], methodName)
@@ -159,71 +157,9 @@ func parseCode(codeDotfile string) {
 
 	codeDotFileParseResult.parseAR(node)
 	codeDotFileParseResult.parseEntity(node)
+	codeDotFileParseResult.parseRepo(node)
 }
 
-func doCallRelation(src string, dst string) {
-	for arKey := range codeArs {
-		if srcEntity, ok := codeArs[arKey].findEntity(src); ok {
-			for arKey2 := range codeArs {
-				if arKey != arKey2 {
-					if dstEntity, ok := codeArs[arKey2].findEntity(dst); ok {
-						srcEntity.callEntities = append(srcEntity.callEntities, dstEntity)
-					}
-				}
-			}
-		}
-	}
-}
-
-func getMethodName(fullMethodName, split string, index int) (string, string, bool) {
-	if strings.Contains(fullMethodName, split) {
-		tmp := strings.Split(fullMethodName, split)
-		methodName := tmp[len(tmp)-index]
-		methodName = strings.Replace(methodName, "\\l", "", -1)
-		subDomain := strings.Replace(tmp[0], "\\l", "", -1)
-		if _, ok := subDomainMap[subDomain]; ok {
-			subDomainMap[subDomain] = append(subDomainMap[subDomain], methodName)
-		}
-		return methodName, subDomain, true
-	}
-	return fullMethodName, "", false
-}
-
-func nodes(g *gographviz.Graph, index int) map[string]string {
-	nodes := make(map[string]string)
-	for _, node := range g.Nodes.Nodes {
-		fullMethodName := strings.Replace(node.Attrs["label"], "\"", "", 2)
-
-		if methodName, _, ok := getMethodName(fullMethodName, "::", index); ok {
-			nodes[node.Name] = methodName
-		} else {
-			nodes[node.Name], _, _ = getMethodName(fullMethodName, ".", index)
-		}
-	}
-	return nodes
-}
-
-func parseCall(codeDotfile string) {
-	fbuf, _ := ioutil.ReadFile(codeDotfile)
-	g, _ := gographviz.Read(fbuf)
-
-	nodes := nodes(g, 2)
-
-	for key := range g.Edges.DstToSrcs {
-		for edgesKey := range g.Edges.DstToSrcs[key] {
-			dst := nodes[key]
-			src := nodes[edgesKey]
-
-			if repo, ok := repos[src]; ok {
-				repo.For = codeArs[dst]
-
-			} else {
-				doCallRelation(src, dst)
-			}
-		}
-	}
-
-}
 func ParseCodeDir(codeDir string, subs []string) *Model {
 	codeDotFiles := codeDotFiles(codeDir)
 	codeArs = make(map[string]*Entity)
@@ -236,10 +172,7 @@ func ParseCodeDir(codeDir string, subs []string) *Model {
 	for _, codeDotfile := range codeDotFiles {
 		parseCode(codeDotfile)
 	}
-	callDotFiles := callDotFiles(codeDir)
-	for _, callDotFile := range callDotFiles {
-		parseCall(callDotFile)
-	}
+
 	subDomains := make(map[string]*SubDomain)
 	if len(subDomainMap) > 0 {
 		for key := range subDomainMap {

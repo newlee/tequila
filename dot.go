@@ -60,15 +60,21 @@ func (model *Model) Compare(other *Model) bool {
 }
 
 func (subDomain *SubDomain) Validate() bool {
+	entityMap := make(map[string]int)
 	for key := range subDomain.ARs {
 		ar := subDomain.ARs[key]
-		for _, cEntity := range ar.callEntities {
-			if _, ok := subDomain.ARs[cEntity.name]; !ok {
-				return false
+		for _, entity := range ar.Entities {
+			if _, ok := entityMap[entity.name]; !ok {
+				entityMap[entity.name] = 0
 			}
+			entityMap[entity.name] = entityMap[entity.name] + 1
 		}
 	}
-
+	for key := range entityMap {
+		if entityMap[key] > 1 {
+			return false
+		}
+	}
 	return true
 }
 
@@ -85,12 +91,12 @@ func (subDomain *SubDomain) Compare(other *SubDomain) bool {
 			return false
 		}
 	}
-	//for key := range subDomain.Repos {
-	//	repo := subDomain.Repos[key]
-	//	if !repo.Compare(other.Repos[key]) {
-	//		return false
-	//	}
-	//}
+	for key := range subDomain.Repos {
+		repo := subDomain.Repos[key]
+		if !repo.Compare(other.Repos[key]) {
+			return false
+		}
+	}
 	return true
 }
 
