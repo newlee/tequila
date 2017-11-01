@@ -2,6 +2,7 @@ package main
 
 import (
 	. "github.com/newlee/tequila/dot"
+	. "github.com/newlee/tequila/model"
 	"os"
 	"path/filepath"
 	"strings"
@@ -70,19 +71,19 @@ func parseRelation(node *Node, result *parseResult) {
 	if !isAggregateRoot(src) {
 		isAr := isAR(node)
 		if isAr {
-			codeArs[src] = &Entity{name: src}
+			codeArs[src] = NewEntity(src)
 		}
 		if isEntity(node) && !isAr {
-			result.es[src] = &Entity{name: src}
+			result.es[src] = NewEntity(src)
 		}
 		if isValueObject(node) {
-			result.vos[src] = &ValueObject{name: src}
+			result.vos[src] = NewValueObject(src)
 		}
 		if isRepo(node) {
-			repos[src] = &Repository{name: src}
+			repos[src] = NewRepository(src)
 		}
 		if strings.HasSuffix(src, "Provider") {
-			providers[src] = &Provider{name: src}
+			providers[src] = NewProvider(src)
 		}
 	}
 }
@@ -113,7 +114,7 @@ func parseEntity(node *Node, result *parseResult) {
 				entity.Entities = append(entity.Entities, et)
 			}
 			if vo, ok := result.vos[dst]; ok {
-				entity.appendVO(vo)
+				entity.AppendVO(vo)
 			}
 		}
 	}
@@ -148,7 +149,7 @@ func parseCode(codeDotfile string) {
 		parseNode(node, parseRepo)
 }
 
-func ParseCodeDir(codeDir string, subs []string) *Model {
+func ParseCodeDir(codeDir string, subs []string) *ProblemModel {
 	codeDotFiles := codeDotFiles(codeDir)
 	codeArs = make(map[string]*Entity)
 	repos = make(map[string]*Repository)
@@ -188,6 +189,6 @@ func ParseCodeDir(codeDir string, subs []string) *Model {
 		subDomains["subdomain"] = subDomain
 	}
 
-	return &Model{SubDomains: subDomains}
+	return &ProblemModel{SubDomains: subDomains}
 
 }
