@@ -9,16 +9,24 @@ import (
 
 var _ = Describe("Tequila", func() {
 	Context("bc code compare", func() {
-
 		It("problem domain", func() {
 			dotFile := "examples/cargo-problem.dot"
-			dddModel := Parse(dotFile)
+			dddModel := ParseProblemModel(dotFile)
 
 			codeDir := "examples/bc-code/html"
 			codeModel := ParseCodeDir(codeDir, make([]string, 0))
 			fmt.Println(len(codeModel.SubDomains["subdomain"].Repos))
 			Expect(dddModel.Compare(codeModel)).Should(Equal(true))
 		})
-	})
 
+		It("solution domain", func() {
+			dotFile := "examples/cargo-bc.dot"
+			bcModel := ParseSolutionModel(dotFile)
+
+			Expect(len(bcModel.Layers)).Should(Equal(5))
+
+			fmt.Println(bcModel.Layers["domain"])
+
+		})
+	})
 })

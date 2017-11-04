@@ -8,12 +8,12 @@ digraph g {
 		penwidth=4
 		fillcolor="#91EEC8"
 		node [style=filled,color=white,shape=box];
-		Api
+		Api[label="Api", comment=Api]
 
 	}
 
 	subgraph cluster2 {
-		label="services"
+		label=services
 		style=filled
 		color="#3DA2AB"
 		fillcolor="#85EBF0"
@@ -25,7 +25,7 @@ digraph g {
 	}
 
 	subgraph cluster3 {
-		label="domain"
+		label=domain
 		style=filled
 		color="#3DA2AB"
 		fillcolor="#85EBF0"
@@ -38,27 +38,26 @@ digraph g {
 
 	}
 	subgraph cluster4 {
-		label="repositories"
+		label=repositories
 		style=filled
 		color="#3DA2AB"
 		fillcolor="#85EBF0"
 		penwidth=4
 		node [style=filled,color=white,shape=box];
         CargoRepository[label="CargoRepository", comment=Repo, shape=box, color=yellow]
-        CargoRepository -> Cargo[style="dashed"]
 	}
 
     subgraph cluster5 {
-		label="gateways"
+		label=gateways
 		style=filled
 		color="#85467E"
 		fillcolor="#D084C4"
 		penwidth=4
 		node [style=filled,color=white,shape=box];
         CargoProviderImpl[label="CargoProviderImpl", comment=Provider, shape=box, color=purple]
-        CargoProviderImpl -> CargoProvider
 	}
 	Api -> CargoService[style="dashed"]
 	CargoService -> CargoRepository[style="dashed"]
-
+    CargoRepository -> Cargo[style="dashed"]
+    CargoProviderImpl -> CargoProvider
 }

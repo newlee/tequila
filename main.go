@@ -6,7 +6,7 @@ import (
 
 func main() {
 	dotFile := "examples/cargo-problem.dot"
-	dddModel := Parse(dotFile)
+	dddModel := ParseProblemModel(dotFile)
 
 	codeDir := "examples/bc-code/html"
 	codeModel := ParseCodeDir(codeDir, make([]string, 0))

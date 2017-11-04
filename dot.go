@@ -4,6 +4,7 @@ import (
 	"github.com/awalterschulze/gographviz"
 	. "github.com/newlee/tequila/model"
 	"io/ioutil"
+	//"fmt"
 )
 
 func edgesKey(edges map[string][]*gographviz.Edge) []string {
@@ -14,7 +15,7 @@ func edgesKey(edges map[string][]*gographviz.Edge) []string {
 	return result
 }
 
-func Parse(dotFile string) *ProblemModel {
+func ParseProblemModel(dotFile string) *ProblemModel {
 	fbuf, _ := ioutil.ReadFile(dotFile)
 	g, _ := gographviz.Read(fbuf)
 
@@ -50,4 +51,34 @@ func Parse(dotFile string) *ProblemModel {
 	}
 
 	return &ProblemModel{SubDomains: subDomains}
+}
+
+func ParseSolutionModel(dotFile string) *BCModel {
+	fbuf, _ := ioutil.ReadFile(dotFile)
+	g, _ := gographviz.Read(fbuf)
+
+	p2c := g.Relations.ParentToChildren
+
+	model := NewBCModel()
+	for clusterKey := range p2c {
+		if clusterKey != "g" {
+			layerName := g.SubGraphs.SubGraphs[clusterKey].Attrs["label"]
+			model.AppendLayer(layerName)
+			for key := range p2c[clusterKey] {
+				model.AppendNode(layerName, key)
+			}
+		}
+	}
+	cms := InitCommentMapping()
+	for _, node := range g.Nodes.Nodes {
+		model.AddNode(cms, node.Name, node.Attrs["comment"])
+	}
+
+	for key := range g.Edges.SrcToDsts {
+		edgeKeys := edgesKey(g.Edges.SrcToDsts[key])
+
+		model.AddRelations(key, edgeKeys)
+	}
+
+	return model
 }

@@ -15,7 +15,7 @@ var _ = Describe("Tequila", func() {
 		It("step1", func() {
 
 			dotFile := "examples/step1-problem.dot"
-			ars := Parse(dotFile).SubDomains[subDomainName].ARs
+			ars := ParseProblemModel(dotFile).SubDomains[subDomainName].ARs
 
 			Expect(len(ars)).Should(Equal(1))
 			aggregateA := ars[aggregateAName]
@@ -27,7 +27,7 @@ var _ = Describe("Tequila", func() {
 		It("step2", func() {
 
 			dotFile := "examples/step2-problem.dot"
-			ars := Parse(dotFile).SubDomains[subDomainName].ARs
+			ars := ParseProblemModel(dotFile).SubDomains[subDomainName].ARs
 
 			Expect(len(ars)).Should(Equal(2))
 			aggregateA := ars[aggregateAName]
@@ -44,17 +44,16 @@ var _ = Describe("Tequila", func() {
 		It("step2 with repository", func() {
 
 			dotFile := "examples/step2-problem.dot"
-			model := Parse(dotFile)
-			ars := model.SubDomains[subDomainName].ARs
+			model := ParseProblemModel(dotFile)
 			repos := model.SubDomains[subDomainName].Repos
 
 			Expect(len(repos)).Should(Equal(1))
-			Expect(repos["AggregateRootARepo"].For).Should(Equal(ars[aggregateAName]))
+			Expect(repos["AggregateRootARepo"].For).Should(Equal(aggregateAName))
 		})
 		It("step2 with provider interface", func() {
 
 			dotFile := "examples/step2-problem.dot"
-			model := Parse(dotFile)
+			model := ParseProblemModel(dotFile)
 			providers := model.SubDomains[subDomainName].Providers
 
 			Expect(len(providers)).Should(Equal(1))
@@ -62,7 +61,7 @@ var _ = Describe("Tequila", func() {
 
 		It("sub domain", func() {
 			dotFile := "examples/subdomain.dot"
-			model := Parse(dotFile)
+			model := ParseProblemModel(dotFile)
 
 			Expect(len(model.SubDomains)).Should(Equal(2))
 			subDomain := model.SubDomains["subdomain1"]
@@ -125,11 +124,10 @@ var _ = Describe("Tequila", func() {
 
 			codeDir := "examples/step2-code/html"
 			model := ParseCodeDir(codeDir, subs)
-			ars := model.SubDomains[subDomainName].ARs
 			repos := model.SubDomains[subDomainName].Repos
 
 			Expect(len(repos)).Should(Equal(1))
-			Expect(repos["AggregateRootARepo"].For).Should(Equal(ars[aggregateAName]))
+			Expect(repos["AggregateRootARepo"].For).Should(Equal(aggregateAName))
 		})
 
 		It("step2 with provider interface", func() {
@@ -177,11 +175,10 @@ var _ = Describe("Tequila", func() {
 
 			codeDir := "examples/step2-Java/html"
 			model := ParseCodeDir(codeDir, subs)
-			ars := model.SubDomains[subDomainName].ARs
 			repos := model.SubDomains[subDomainName].Repos
 
 			Expect(len(repos)).Should(Equal(1))
-			Expect(repos["AggregateRootARepo"].For).Should(Equal(ars[aggregateAName]))
+			Expect(repos["AggregateRootARepo"].For).Should(Equal(aggregateAName))
 		})
 
 		It("step2 with provider interface", func() {

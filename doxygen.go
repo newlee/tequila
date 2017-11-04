@@ -123,9 +123,7 @@ func parseRepo(node *Node, result *parseResult) {
 	if repo, ok := repos[node.Name]; ok {
 		for _, relation := range node.DstNodes {
 			dst := relation.Node.Name
-			if ar, ok := codeArs[dst]; ok {
-				repo.For = ar
-			}
+			repo.For = dst
 		}
 	}
 }

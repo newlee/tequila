@@ -13,7 +13,7 @@ type ValueObject struct {
 
 type Repository struct {
 	name string
-	For  *Entity
+	For  string
 }
 type Provider struct {
 	name string
@@ -72,5 +72,5 @@ func (entity *Entity) Compare(other *Entity) bool {
 }
 
 func (repo *Repository) Compare(other *Repository) bool {
-	return repo.For.Compare(other.For)
+	return repo.For == other.For
 }

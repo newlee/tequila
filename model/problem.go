@@ -140,7 +140,7 @@ func (subDomain *SubDomain) AddRelations(src string, dsts []string) {
 
 func (subDomain *SubDomain) addRepoRelations(repo interface{}, dsts []string) {
 	for _, dst := range dsts {
-		repo.(*Repository).For = subDomain.ARs[dst]
+		repo.(*Repository).For = dst
 	}
 }
 func (subDomain *SubDomain) addEntityRelations(entity interface{}, dsts []string) {
