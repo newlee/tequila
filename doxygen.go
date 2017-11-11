@@ -123,18 +123,22 @@ func parseRepo(node *Node, result *parseResult) {
 	if repo, ok := repos[node.Name]; ok {
 		for _, relation := range node.DstNodes {
 			dst := relation.Node.Name
-			repo.For = dst
+			if dst != "Repository" {
+				repo.For = dst
+			}
 		}
 	}
 }
-func subDomainCallback(subDomain, methodName string) {
+func fullNameCallback(fullName, methodName string) {
+	tmp := strings.Split(fullName, "::")
+	subDomain := tmp[0]
 	if _, ok := subDomainMap[subDomain]; ok {
 		subDomainMap[subDomain] = append(subDomainMap[subDomain], methodName)
 	}
 }
 func parseCode(codeDotfile string) {
 	node := ParseDoxygenFile(codeDotfile)
-	node.RemoveNS(subDomainCallback)
+	node.RemoveNS(fullNameCallback)
 
 	codeDotFileParseResult := &parseResult{
 		es:  make(map[string]*Entity),
@@ -147,7 +151,7 @@ func parseCode(codeDotfile string) {
 		parseNode(node, parseRepo)
 }
 
-func ParseCodeDir(codeDir string, subs []string) *ProblemModel {
+func ParseCodeProblemModel(codeDir string, subs []string) *ProblemModel {
 	codeDotFiles := codeDotFiles(codeDir)
 	codeArs = make(map[string]*Entity)
 	repos = make(map[string]*Repository)
@@ -189,4 +193,8 @@ func ParseCodeDir(codeDir string, subs []string) *ProblemModel {
 
 	return &ProblemModel{SubDomains: subDomains}
 
+}
+
+func ParseCodeSolutionModel(codeDir string) *BCModel {
+	return &BCModel{}
 }

@@ -9,6 +9,6 @@ func main() {
 	dddModel := ParseProblemModel(dotFile)
 
 	codeDir := "examples/bc-code/html"
-	codeModel := ParseCodeDir(codeDir, make([]string, 0))
+	codeModel := ParseCodeProblemModel(codeDir, make([]string, 0))
 	fmt.Println(dddModel.Compare(codeModel))
 }

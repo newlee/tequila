@@ -14,9 +14,8 @@ var _ = Describe("Tequila", func() {
 			dddModel := ParseProblemModel(dotFile)
 
 			codeDir := "examples/bc-code/html"
-			codeModel := ParseCodeDir(codeDir, make([]string, 0))
-			fmt.Println(len(codeModel.SubDomains["subdomain"].Repos))
-			Expect(dddModel.Compare(codeModel)).Should(Equal(true))
+			codeModel := ParseCodeProblemModel(codeDir, make([]string, 0))
+			Expect(dddModel.Compare(codeModel)).Should(BeNil())
 		})
 
 		It("solution domain", func() {
@@ -25,8 +24,11 @@ var _ = Describe("Tequila", func() {
 
 			Expect(len(bcModel.Layers)).Should(Equal(5))
 
-			fmt.Println(bcModel.Layers["domain"])
+			codeDir := "examples/bc-code/html"
+			codeModel := ParseCodeSolutionModel(codeDir)
 
+			fmt.Println(codeModel)
+			Expect(bcModel.Compare(codeModel)).Should(BeNil())
 		})
 	})
 })

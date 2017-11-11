@@ -1,5 +1,9 @@
 package model
 
+import (
+	"errors"
+)
+
 type SubDomain struct {
 	ARs       map[string]*Entity
 	Repos     map[string]*Repository
@@ -20,19 +24,19 @@ func (model *ProblemModel) Validate() bool {
 	return true
 }
 
-func (model *ProblemModel) Compare(other *ProblemModel) bool {
+func (model *ProblemModel) Compare(other *ProblemModel) error {
 	if len(model.SubDomains) != len(other.SubDomains) {
-		return false
+		return errors.New("diff subdomain number")
 	}
 
 	for key := range model.SubDomains {
-		ar := model.SubDomains[key]
-		if !ar.Compare(other.SubDomains[key]) {
-			return false
+		domain := model.SubDomains[key]
+		if !domain.Compare(other.SubDomains[key]) {
+			return errors.New("subdomain: " + key + "is diff")
 		}
 	}
 
-	return true
+	return nil
 }
 
 func (subDomain *SubDomain) Validate() bool {

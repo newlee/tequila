@@ -28,37 +28,37 @@ func (node *Node) removeGenericRelation(genericRelationMap map[string]*Node) {
 	}
 }
 
-func getMethodName(fullMethodName, split string, subDomainCallback func(string, string)) (string, string, bool) {
+func getMethodName(fullMethodName, split string, subDomainCallback func(string, string)) (string, bool) {
 	if strings.Contains(fullMethodName, split) {
 		tmp := strings.Split(fullMethodName, split)
 		methodName := tmp[len(tmp)-1]
 		methodName = strings.Replace(methodName, "\\l", "", -1)
-		subDomain := strings.Replace(tmp[0], "\\l", "", -1)
-		subDomainCallback(subDomain, methodName)
+		fullMethodName = strings.Replace(fullMethodName, "\\l", "", -1)
+		subDomainCallback(fullMethodName, methodName)
 
-		return methodName, subDomain, true
+		return methodName, true
 	}
-	return fullMethodName, "", false
+	return fullMethodName, false
 }
 
-func (node *Node) RemoveNS(subDomainCallback func(string, string)) {
+func (node *Node) RemoveNS(fullNameCallback func(string, string)) {
 	fullMethodName := node.Name
-	if methodName, _, ok := getMethodName(fullMethodName, "::", subDomainCallback); ok {
+	if methodName, ok := getMethodName(fullMethodName, "::", fullNameCallback); ok {
 		node.Name = methodName
 	} else {
-		node.Name, _, _ = getMethodName(fullMethodName, ".", subDomainCallback)
+		node.Name, _ = getMethodName(fullMethodName, ".", fullNameCallback)
 	}
 	for _, relation := range node.DstNodes {
-		relation.Node.RemoveNS(subDomainCallback)
+		relation.Node.RemoveNS(fullNameCallback)
 	}
 }
 
 func (node *Node) IsIt(it string) bool {
 	name := node.Name
-	if methodName, _, ok := getMethodName(name, "::", func(s string, s2 string) {}); ok {
+	if methodName, ok := getMethodName(name, "::", func(s string, s2 string) {}); ok {
 		name = methodName
 	} else {
-		name, _, _ = getMethodName(name, ".", func(s string, s2 string) {})
+		name, _ = getMethodName(name, ".", func(s string, s2 string) {})
 	}
 	return node.isIt(it) && name != it
 }

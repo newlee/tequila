@@ -93,7 +93,7 @@ var _ = Describe("Tequila", func() {
 		It("step1", func() {
 
 			codeDir := "examples/step1-code/html"
-			codeArs := ParseCodeDir(codeDir, subs).SubDomains[subDomainName].ARs
+			codeArs := ParseCodeProblemModel(codeDir, subs).SubDomains[subDomainName].ARs
 
 			Expect(len(codeArs)).Should(Equal(1))
 			Expect(len(codeArs[aggregateAName].Entities)).Should(Equal(1))
@@ -104,7 +104,7 @@ var _ = Describe("Tequila", func() {
 		It("step2", func() {
 
 			codeDir := "examples/step2-code/html"
-			codeArs := ParseCodeDir(codeDir, subs).SubDomains[subDomainName].ARs
+			codeArs := ParseCodeProblemModel(codeDir, subs).SubDomains[subDomainName].ARs
 
 			Expect(len(codeArs)).Should(Equal(2))
 			ara := aggregateAName
@@ -123,7 +123,7 @@ var _ = Describe("Tequila", func() {
 		It("step2 with repository", func() {
 
 			codeDir := "examples/step2-code/html"
-			model := ParseCodeDir(codeDir, subs)
+			model := ParseCodeProblemModel(codeDir, subs)
 			repos := model.SubDomains[subDomainName].Repos
 
 			Expect(len(repos)).Should(Equal(1))
@@ -132,19 +132,19 @@ var _ = Describe("Tequila", func() {
 
 		It("step2 with provider interface", func() {
 			codeDir := "examples/step2-code/html"
-			model := ParseCodeDir(codeDir, subs)
+			model := ParseCodeProblemModel(codeDir, subs)
 			providers := model.SubDomains[subDomainName].Providers
 
 			Expect(len(providers)).Should(Equal(1))
 		})
 		It("step3 should failded when aggregate ref another entity", func() {
 			codeDir := "examples/step2-code/html"
-			model := ParseCodeDir(codeDir, subs)
+			model := ParseCodeProblemModel(codeDir, subs)
 
 			Expect(model.Validate()).Should(Equal(true))
 
 			codeDir = "examples/step3-code/html"
-			model = ParseCodeDir(codeDir, subs)
+			model = ParseCodeProblemModel(codeDir, subs)
 
 			Expect(model.Validate()).Should(Equal(false))
 		})
@@ -155,7 +155,7 @@ var _ = Describe("Tequila", func() {
 		It("step2", func() {
 
 			codeDir := "examples/step2-Java/html"
-			codeArs := ParseCodeDir(codeDir, subs).SubDomains[subDomainName].ARs
+			codeArs := ParseCodeProblemModel(codeDir, subs).SubDomains[subDomainName].ARs
 
 			Expect(len(codeArs)).Should(Equal(2))
 			ara := aggregateAName
@@ -174,7 +174,7 @@ var _ = Describe("Tequila", func() {
 		It("step2 with repository", func() {
 
 			codeDir := "examples/step2-Java/html"
-			model := ParseCodeDir(codeDir, subs)
+			model := ParseCodeProblemModel(codeDir, subs)
 			repos := model.SubDomains[subDomainName].Repos
 
 			Expect(len(repos)).Should(Equal(1))
@@ -183,21 +183,21 @@ var _ = Describe("Tequila", func() {
 
 		It("step2 with provider interface", func() {
 			codeDir := "examples/step2-Java/html"
-			model := ParseCodeDir(codeDir, subs)
+			model := ParseCodeProblemModel(codeDir, subs)
 			providers := model.SubDomains[subDomainName].Providers
 
 			Expect(len(providers)).Should(Equal(1))
 		})
 		It("step3 should failded when aggregate ref another entity", func() {
 			codeDir := "examples/step2-Java/html"
-			model := ParseCodeDir(codeDir, subs)
+			model := ParseCodeProblemModel(codeDir, subs)
 
 			Expect(model.Validate()).Should(Equal(true))
 		})
 
 		It("sub domain", func() {
 			codeDir := "examples/subdomain-code/html"
-			model := ParseCodeDir(codeDir, []string{"subdomain1", "subdomain2"})
+			model := ParseCodeProblemModel(codeDir, []string{"subdomain1", "subdomain2"})
 
 			Expect(len(model.SubDomains)).Should(Equal(2))
 			subDomain := model.SubDomains["subdomain1"]
@@ -228,7 +228,7 @@ var _ = Describe("Tequila", func() {
 
 		It("inheritance tree", func() {
 			codeDir := "examples/inheritance-tree-code/html"
-			codeArs := ParseCodeDir(codeDir, subs).SubDomains[subDomainName].ARs
+			codeArs := ParseCodeProblemModel(codeDir, subs).SubDomains[subDomainName].ARs
 
 			Expect(len(codeArs)).Should(Equal(2))
 			Expect(len(codeArs[aggregateAName].Entities)).Should(Equal(2))

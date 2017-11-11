@@ -69,14 +69,12 @@ func ParseSolutionModel(dotFile string) *BCModel {
 			}
 		}
 	}
-	cms := InitCommentMapping()
 	for _, node := range g.Nodes.Nodes {
-		model.AddNode(cms, node.Name, node.Attrs["comment"])
+		model.AddNode(node.Name, node.Attrs["comment"])
 	}
 
 	for key := range g.Edges.SrcToDsts {
 		edgeKeys := edgesKey(g.Edges.SrcToDsts[key])
-
 		model.AddRelations(key, edgeKeys)
 	}
 

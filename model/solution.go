@@ -2,7 +2,7 @@ package model
 
 type layer interface {
 	Add(name, comment string)
-	AddRelations(src string, dsts []string)
+	addRelations(src string, dsts []string)
 }
 
 type Layer struct {
@@ -139,11 +139,9 @@ func (model *BCModel) findLayer(nodeName string) *Layer {
 	}
 	return nil
 }
-func (model *BCModel) AddNode(cms *CommentMappingList, name, comment string) {
+func (model *BCModel) AddNode(name, comment string) {
 	layer := model.findLayer(name)
-
 	layer.layer.Add(name, comment)
-	//fmt.Println(layer.layer)
 }
 
 func (layer *DomainLayer) addEntityRelations(src string, dsts []string) {
@@ -180,12 +178,12 @@ func (layer *DomainLayer) addAggregateRootRelations(src string, dsts []string) {
 	}
 }
 
-func (layer *DomainLayer) AddRelations(src string, dsts []string) {
+func (layer *DomainLayer) addRelations(src string, dsts []string) {
 	layer.addAggregateRootRelations(src, dsts)
 	layer.addEntityRelations(src, dsts)
 }
 
-func (layer *RepoLayer) AddRelations(src string, dsts []string) {
+func (layer *RepoLayer) addRelations(src string, dsts []string) {
 	repo, ok := layer.Repos[src]
 	if ok {
 		for _, dst := range dsts {
@@ -194,7 +192,7 @@ func (layer *RepoLayer) AddRelations(src string, dsts []string) {
 	}
 }
 
-func (layer *GatewayLayer) AddRelations(src string, dsts []string) {
+func (layer *GatewayLayer) addRelations(src string, dsts []string) {
 	gateway, ok := layer.GateWays[src]
 	if ok {
 		for _, dst := range dsts {
@@ -203,7 +201,7 @@ func (layer *GatewayLayer) AddRelations(src string, dsts []string) {
 	}
 }
 
-func (layer *ServiceLayer) AddRelations(src string, dsts []string) {
+func (layer *ServiceLayer) addRelations(src string, dsts []string) {
 	service, ok := layer.Services[src]
 	if ok {
 		for _, dst := range dsts {
@@ -212,7 +210,7 @@ func (layer *ServiceLayer) AddRelations(src string, dsts []string) {
 	}
 }
 
-func (layer *ApiLayer) AddRelations(src string, dsts []string) {
+func (layer *ApiLayer) addRelations(src string, dsts []string) {
 	api, ok := layer.Apis[src]
 	if ok {
 		for _, dst := range dsts {
@@ -223,6 +221,9 @@ func (layer *ApiLayer) AddRelations(src string, dsts []string) {
 
 func (model *BCModel) AddRelations(src string, dsts []string) {
 	layer := model.findLayer(src)
+	layer.layer.addRelations(src, dsts)
+}
 
-	layer.layer.AddRelations(src, dsts)
+func (model *BCModel) Compare(other *BCModel) error {
+	return nil
 }
