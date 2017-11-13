@@ -25,7 +25,7 @@ var _ = Describe("Tequila", func() {
 			Expect(len(bcModel.Layers)).Should(Equal(5))
 
 			codeDir := "examples/bc-code/html"
-			codeModel := ParseCodeSolutionModel(codeDir)
+			codeModel := ParseCodeSolutionModel(codeDir, []string{"domain", "repositories", "gateways", "services", "api"})
 
 			fmt.Println(codeModel)
 			Expect(bcModel.Compare(codeModel)).Should(BeNil())

@@ -15,8 +15,10 @@ type parseResult struct {
 
 var codeArs = make(map[string]*Entity)
 var repos = make(map[string]*Repository)
+var services = make(map[string]*Service)
 var providers = make(map[string]*Provider)
 var subDomainMap = make(map[string][]string)
+var layerMap = make(map[string][]string)
 
 func isAggregateRoot(className string) bool {
 	return className == "AggregateRoot"
@@ -58,6 +60,10 @@ func isRepo(node *Node) bool {
 	return node.IsIt("Repository")
 }
 
+func isSerice(node *Node) bool {
+	return strings.HasSuffix(node.Name, "Service")
+}
+
 func (result *parseResult) parseNode(node *Node, todo func(*Node, *parseResult)) *parseResult {
 	todo(node, result)
 	for _, relation := range node.DstNodes {
@@ -78,6 +84,9 @@ func parseRelation(node *Node, result *parseResult) {
 		}
 		if isValueObject(node) {
 			result.vos[src] = NewValueObject(src)
+		}
+		if isSerice(node) {
+			services[src] = NewService(src)
 		}
 		if isRepo(node) {
 			repos[src] = NewRepository(src)
@@ -129,6 +138,14 @@ func parseRepo(node *Node, result *parseResult) {
 		}
 	}
 }
+func parseService(node *Node, result *parseResult) {
+	if service, ok := services[node.Name]; ok {
+		for _, relation := range node.DstNodes {
+			dst := relation.Node.Name
+			service.Refs = append(service.Refs, dst)
+		}
+	}
+}
 func fullNameCallback(fullName, methodName string) {
 	tmp := strings.Split(fullName, "::")
 	subDomain := tmp[0]
@@ -149,6 +166,30 @@ func parseCode(codeDotfile string) {
 		parseNode(node, parseAR).
 		parseNode(node, parseEntity).
 		parseNode(node, parseRepo)
+}
+
+func fullNameCallbackForLayer(fullName, methodName string) {
+	tmp := strings.Split(fullName, "::")
+	layer := tmp[0]
+	if _, ok := layerMap[layer]; ok {
+		layerMap[layer] = append(layerMap[layer], methodName)
+	}
+}
+
+func parseCodeForSolution(codeDotfile string) {
+	node := ParseDoxygenFile(codeDotfile)
+	node.RemoveNS(fullNameCallbackForLayer)
+
+	codeDotFileParseResult := &parseResult{
+		es:  make(map[string]*Entity),
+		vos: make(map[string]*ValueObject),
+	}
+
+	codeDotFileParseResult.parseNode(node, parseRelation).
+		parseNode(node, parseAR).
+		parseNode(node, parseEntity).
+		parseNode(node, parseRepo).
+		parseNode(node, parseService)
 }
 
 func ParseCodeProblemModel(codeDir string, subs []string) *ProblemModel {
@@ -195,6 +236,34 @@ func ParseCodeProblemModel(codeDir string, subs []string) *ProblemModel {
 
 }
 
-func ParseCodeSolutionModel(codeDir string) *BCModel {
-	return &BCModel{}
+func ParseCodeSolutionModel(codeDir string, layers []string) *BCModel {
+	codeDotFiles := codeDotFiles(codeDir)
+	codeArs = make(map[string]*Entity)
+	repos = make(map[string]*Repository)
+	services = make(map[string]*Service)
+	providers = make(map[string]*Provider)
+	layerMap = make(map[string][]string)
+	for _, layer := range layers {
+		layerMap[layer] = make([]string, 0)
+	}
+	for _, codeDotfile := range codeDotFiles {
+		parseCodeForSolution(codeDotfile)
+	}
+	model := NewBCModel()
+	for key := range layerMap {
+		model.AppendLayer(key)
+
+		for _, o := range layerMap[key] {
+			if ar, ok := codeArs[o]; ok {
+				model.AddARToLayer(key, ar)
+			}
+			if repo, ok := repos[o]; ok {
+				model.AddRepoToLayer(key, repo)
+			}
+			if service, ok := services[o]; ok {
+				model.AddServiceToLayer(key, service)
+			}
+		}
+	}
+	return model
 }

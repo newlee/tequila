@@ -1,8 +1,13 @@
 package model
 
+import (
+	"errors"
+)
+
 type layer interface {
 	Add(name, comment string)
 	addRelations(src string, dsts []string)
+	compare(other interface{}) bool
 }
 
 type Layer struct {
@@ -18,6 +23,10 @@ type BCModel struct {
 type Service struct {
 	name string
 	Refs []string
+}
+
+func NewService(name string) *Service {
+	return &Service{name: name}
 }
 
 type Api struct {
@@ -123,7 +132,9 @@ func newLayer(name string) layer {
 }
 
 func (model *BCModel) AppendLayer(name string) {
-	model.Layers[name] = &Layer{name: name, nodes: make(map[string]string), layer: newLayer(name)}
+	if _, ok := model.Layers[name]; !ok {
+		model.Layers[name] = &Layer{name: name, nodes: make(map[string]string), layer: newLayer(name)}
+	}
 }
 
 func (model *BCModel) AppendNode(layerName, nodeName string) {
@@ -142,6 +153,21 @@ func (model *BCModel) findLayer(nodeName string) *Layer {
 func (model *BCModel) AddNode(name, comment string) {
 	layer := model.findLayer(name)
 	layer.layer.Add(name, comment)
+}
+
+func (model *BCModel) AddRepoToLayer(layerName string, repo *Repository) {
+	layer := model.Layers[layerName]
+	layer.layer.(*RepoLayer).Repos[repo.name] = repo
+}
+
+func (model *BCModel) AddARToLayer(layerName string, ar *Entity) {
+	layer := model.Layers[layerName]
+	layer.layer.(*DomainLayer).ARs[ar.name] = ar
+}
+
+func (model *BCModel) AddServiceToLayer(layerName string, service *Service) {
+	layer := model.Layers[layerName]
+	layer.layer.(*ServiceLayer).Services[service.name] = service
 }
 
 func (layer *DomainLayer) addEntityRelations(src string, dsts []string) {
@@ -219,11 +245,79 @@ func (layer *ApiLayer) addRelations(src string, dsts []string) {
 	}
 }
 
+func (layer *DomainLayer) compare(other interface{}) bool {
+	o := (other).(*DomainLayer)
+	if len(o.ARs) != len(layer.ARs) {
+		return false
+	}
+	for key := range layer.ARs {
+		ar := layer.ARs[key]
+		if !ar.Compare(o.ARs[key]) {
+			return false
+		}
+	}
+	return true
+}
+
+func (layer *RepoLayer) compare(other interface{}) bool {
+	o := (other).(*RepoLayer)
+	if len(o.Repos) != len(layer.Repos) {
+		return false
+	}
+	for key := range layer.Repos {
+		repo := layer.Repos[key]
+		if !repo.Compare(o.Repos[key]) {
+			return false
+		}
+	}
+	return true
+}
+
+func (layer *ServiceLayer) compare(other interface{}) bool {
+	o := (other).(*ServiceLayer)
+	if len(o.Services) != len(layer.Services) {
+		return false
+	}
+	for key := range layer.Services {
+		service := layer.Services[key]
+		if !service.compare(o.Services[key]) {
+			return false
+		}
+	}
+	return true
+}
+
+func (layer *GatewayLayer) compare(other interface{}) bool {
+	return true
+}
+
+func (layer *ApiLayer) compare(other interface{}) bool {
+	return true
+}
+
 func (model *BCModel) AddRelations(src string, dsts []string) {
 	layer := model.findLayer(src)
 	layer.layer.addRelations(src, dsts)
 }
 
+func (service *Service) compare(other *Service) bool {
+	if len(service.Refs) != len(other.Refs) {
+		return false
+	}
+	return true
+}
+func (layer *Layer) Compare(other *Layer) bool {
+	return layer.layer.compare(other.layer)
+}
 func (model *BCModel) Compare(other *BCModel) error {
+	if len(model.Layers) != len(other.Layers) {
+		return errors.New("diff layer number")
+	}
+	for key := range model.Layers {
+		layer := model.Layers[key]
+		if !layer.Compare(other.Layers[key]) {
+			return errors.New("layer: " + key + " is diff")
+		}
+	}
 	return nil
 }
