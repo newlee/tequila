@@ -21,6 +21,22 @@ type FullGraph struct {
 	RelationList map[string]*Relation
 }
 
+func (f *FullGraph) FindCrossRef() []string {
+	mergedRelationMap := make(map[string]string)
+	result := make([]string,0)
+	for key := range f.RelationList {
+		relation := f.RelationList[key]
+		mergedFrom := strings.Replace(strings.Replace(relation.From, ".h", "", -1), ".cpp", "", -1)
+		mergedTo := strings.Replace(strings.Replace(relation.To, ".h", "", -1), ".cpp", "", -1)
+
+		if _, ok := mergedRelationMap[mergedTo+mergedFrom]; ok {
+			result = append(result, mergedFrom + " <-> " + mergedTo)
+		}
+		mergedRelationMap[mergedFrom+mergedTo] = ""
+	}
+	return result
+}
+
 var fullGraph *FullGraph
 
 func parseRelation(edge *gographviz.Edge, nodes map[string]string) {
@@ -146,7 +162,6 @@ func ParseCodeDir(codeDir string) *FullGraph {
 
 	for key := range fullGraph.RelationList {
 		relation := fullGraph.RelationList[key]
-
 		if nodes[relation.From] != "" {
 			fromNode := nodes[relation.From]
 			toNode := nodes[relation.To]
