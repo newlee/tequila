@@ -42,13 +42,13 @@ func MergeDotFiles(dir string) *FullGraph {
 	classMap := make(map[string][]string)
 
 	for nodeKey := range fullGraph.NodeList {
-		tmp := strings.Split(nodeKey, ".")
+		tmp := strings.Split(nodeKey, "/")
 		packageName := tmp[0]
 		if packageName == nodeKey {
 			packageName = "main"
 		}
 		if len(tmp) > 2 {
-			packageName = strings.Join(tmp[0:len(tmp)-1], ".")
+			packageName = strings.Join(tmp[0:len(tmp)-1], "/")
 		}
 
 		if _, ok := classMap[packageName]; !ok {

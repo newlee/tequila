@@ -118,6 +118,11 @@ func ParseCodeDir(codeDir string) *FullGraph {
 		parseDotFile(codeDotfile)
 	}
 
+
+	return fullGraph
+}
+
+func (fullGraph *FullGraph) ToDot(fileName string)  {
 	graph := gographviz.NewGraph()
 	graph.SetName("G")
 
@@ -171,9 +176,8 @@ func ParseCodeDir(codeDir string) *FullGraph {
 		}
 	}
 
-	f, _ := os.Create("dep.dot")
+	f, _ := os.Create(fileName)
 	w := bufio.NewWriter(f)
 	w.WriteString("di" + graph.String())
 	w.Flush()
-	return fullGraph
 }
