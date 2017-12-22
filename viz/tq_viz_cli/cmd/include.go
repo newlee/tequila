@@ -11,7 +11,7 @@ var includeCmd = &cobra.Command{
 	Short: "include dependencies of source code",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		result := ParseCodeDir(cmd.Flag("source").Value.String())
+		result := ParseInclude(cmd.Flag("source").Value.String())
 
 		if cmd.Flag("findCrossRefs").Value.String() == "true" {
 			crossRefs := result.FindCrossRef(MergeHeaderFunc)
@@ -29,7 +29,7 @@ var includeCmd = &cobra.Command{
 			result = result.MergeHeaderFile(MergePackageFunc)
 		}
 
-		result.ToDot(cmd.Flag("output").Value.String())
+		result.ToDot(cmd.Flag("output").Value.String(), "/")
 	},
 }
 

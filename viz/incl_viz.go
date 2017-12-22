@@ -120,11 +120,11 @@ func parseDotFile(codeDotfile string) {
 	}
 }
 
-func codeDotFiles(codeDir string) []string {
+func codeDotFiles(codeDir string, fileFilter string) []string {
 	codeDotFiles := make([]string, 0)
 	filepath.Walk(codeDir, func(path string, fi os.FileInfo, err error) error {
 		if strings.HasSuffix(path, ".dot") {
-			if strings.HasSuffix(path, "_dep__incl.dot") {
+			if strings.HasSuffix(path, fileFilter) {
 				//return nil
 				if strings.Contains(path, "_test_") {
 					return nil
@@ -140,12 +140,12 @@ func codeDotFiles(codeDir string) []string {
 	return codeDotFiles
 }
 
-func ParseCodeDir(codeDir string) *FullGraph {
+func ParseInclude(codeDir string) *FullGraph {
 	fullGraph = &FullGraph{
 		NodeList:     make(map[string]string),
 		RelationList: make(map[string]*Relation),
 	}
-	codeDotFiles := codeDotFiles(codeDir)
+	codeDotFiles := codeDotFiles(codeDir, "_dep__incl.dot")
 
 	for _, codeDotfile := range codeDotFiles {
 		parseDotFile(codeDotfile)
@@ -154,7 +154,7 @@ func ParseCodeDir(codeDir string) *FullGraph {
 	return fullGraph
 }
 
-func (fullGraph *FullGraph) ToDot(fileName string) {
+func (fullGraph *FullGraph) ToDot(fileName string, split string) {
 	graph := gographviz.NewGraph()
 	graph.SetName("G")
 
@@ -165,13 +165,13 @@ func (fullGraph *FullGraph) ToDot(fileName string) {
 	layerMap := make(map[string][]string)
 
 	for nodeKey := range fullGraph.NodeList {
-		tmp := strings.Split(nodeKey, "/")
+		tmp := strings.Split(nodeKey, split)
 		packageName := tmp[0]
 		if packageName == nodeKey {
 			packageName = "main"
 		}
 		if len(tmp) > 2 {
-			packageName = strings.Join(tmp[0:len(tmp)-1], "/")
+			packageName = strings.Join(tmp[0:len(tmp)-1], split)
 		}
 
 		if _, ok := layerMap[packageName]; !ok {
@@ -188,7 +188,7 @@ func (fullGraph *FullGraph) ToDot(fileName string) {
 		layerIndex++
 		for _, node := range layerMap[layer] {
 			attrs := make(map[string]string)
-			fileName := strings.Replace(node, layer+"/", "", -1)
+			fileName := strings.Replace(node, layer+split, "", -1)
 			attrs["label"] = "\"" + fileName + "\""
 			attrs["shape"] = "box"
 			graph.AddNode(layerName, "node"+strconv.Itoa(nodeIndex), attrs)
