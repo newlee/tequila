@@ -118,11 +118,10 @@ func ParseCodeDir(codeDir string) *FullGraph {
 		parseDotFile(codeDotfile)
 	}
 
-
 	return fullGraph
 }
 
-func (fullGraph *FullGraph) ToDot(fileName string)  {
+func (fullGraph *FullGraph) ToDot(fileName string) {
 	graph := gographviz.NewGraph()
 	graph.SetName("G")
 
