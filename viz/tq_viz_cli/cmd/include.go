@@ -26,10 +26,14 @@ var includeCmd = &cobra.Command{
 			for _, cf := range crossRefs {
 				fmt.Println(cf)
 			}
-		} else {
-			result.ToDot(cmd.Flag("output").Value.String())
+			return
 		}
 
+		if cmd.Flag("mergeHeader").Value.String() == "true" {
+			result = result.MergeHeaderFile(mergeFunc)
+		}
+
+		result.ToDot(cmd.Flag("output").Value.String())
 	},
 }
 
@@ -39,4 +43,5 @@ func init() {
 	includeCmd.Flags().StringP("source", "s", "", "source code directory")
 	includeCmd.Flags().StringP("output", "o", "dep.dot", "output dot file name")
 	includeCmd.Flags().BoolP("findCrossRefs", "F", false, "find cross references")
+	includeCmd.Flags().BoolP("mergeHeader", "M", false, "merge header file to same cpp file")
 }

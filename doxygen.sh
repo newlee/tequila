@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 doxygen examples/inheritance-tree-code/Doxyfile
 doxygen examples/step1-code/Doxyfile
 doxygen examples/step2-code/Doxyfile

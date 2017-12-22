@@ -37,19 +37,52 @@ func (f *FullGraph) FindCrossRef(merge func(string) string) []string {
 	return result
 }
 
+func (f *FullGraph) MergeHeaderFile(merge func(string) string) *FullGraph {
+	result := &FullGraph{
+		NodeList:     make(map[string]string),
+		RelationList: make(map[string]*Relation),
+	}
+	nodes := make(map[string]string)
+
+	for key := range f.NodeList {
+		mergedKey := merge(key)
+		nodes[key] = mergedKey
+		result.NodeList[mergedKey] = mergedKey
+	}
+	for key := range f.RelationList {
+		relation := f.RelationList[key]
+		mergedFrom := merge(relation.From)
+		mergedTo := merge(relation.To)
+		if mergedFrom == mergedTo {
+			continue
+		}
+
+		mergedRelation := &Relation{
+			From:  mergedFrom,
+			To:    mergedTo,
+			Style: "\"solid\"",
+		}
+
+		result.RelationList[mergedRelation.From+mergedRelation.To] = mergedRelation
+	}
+	return result
+}
+
 var fullGraph *FullGraph
 
 func parseRelation(edge *gographviz.Edge, nodes map[string]string) {
 	if _, ok := nodes[edge.Src]; ok {
-		dst := nodes[edge.Dst]
-		src := nodes[edge.Src]
+		if _, ok := nodes[edge.Dst]; ok {
+			dst := nodes[edge.Dst]
+			src := nodes[edge.Src]
 
-		relation := &Relation{
-			From:  dst,
-			To:    src,
-			Style: "\"solid\"",
+			relation := &Relation{
+				From:  dst,
+				To:    src,
+				Style: "\"solid\"",
+			}
+			fullGraph.RelationList[relation.From+"->"+relation.To] = relation
 		}
-		fullGraph.RelationList[relation.From+relation.To] = relation
 	}
 }
 
