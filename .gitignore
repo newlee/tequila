@@ -26,3 +26,9 @@ tequila
 .DS_Store
 
 build/
+viz/merged.dot
+viz/merged.svg
+viz/merged_package.dot
+viz/merged_package.svg
+viz/dep.dot
+viz/dep.svg

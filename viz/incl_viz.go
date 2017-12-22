@@ -21,16 +21,16 @@ type FullGraph struct {
 	RelationList map[string]*Relation
 }
 
-func (f *FullGraph) FindCrossRef() []string {
+func (f *FullGraph) FindCrossRef(merge func(string) string) []string {
 	mergedRelationMap := make(map[string]string)
-	result := make([]string,0)
+	result := make([]string, 0)
 	for key := range f.RelationList {
 		relation := f.RelationList[key]
-		mergedFrom := strings.Replace(strings.Replace(relation.From, ".h", "", -1), ".cpp", "", -1)
-		mergedTo := strings.Replace(strings.Replace(relation.To, ".h", "", -1), ".cpp", "", -1)
+		mergedFrom := merge(relation.From)
+		mergedTo := merge(relation.To)
 
 		if _, ok := mergedRelationMap[mergedTo+mergedFrom]; ok {
-			result = append(result, mergedFrom + " <-> " + mergedTo)
+			result = append(result, mergedFrom+" <-> "+mergedTo)
 		}
 		mergedRelationMap[mergedFrom+mergedTo] = ""
 	}
@@ -166,16 +166,8 @@ func ParseCodeDir(codeDir string) *FullGraph {
 			fromNode := nodes[relation.From]
 			toNode := nodes[relation.To]
 			attrs := make(map[string]string)
-			if strings.HasSuffix(relation.From, ".m") {
-				toName := strings.Replace(relation.From, ".m", "", -1)
-				if !strings.Contains(relation.To, toName) {
-					relation.Style = "\"dashed\""
-				}
-			}
 			attrs["style"] = relation.Style
-
 			graph.AddEdge(fromNode, toNode, true, attrs)
-
 		}
 	}
 
@@ -184,5 +176,4 @@ func ParseCodeDir(codeDir string) *FullGraph {
 	w.WriteString("di" + graph.String())
 	w.Flush()
 	return fullGraph
-
 }

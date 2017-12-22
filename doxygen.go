@@ -60,6 +60,10 @@ func isRepo(node *Node) bool {
 	return node.IsIt("Repository")
 }
 
+func isProvider(node *Node) bool {
+	return node.IsIt("Provider") && !strings.HasPrefix(node.Name, "Stub") && !strings.HasPrefix(node.Name, "Fake")
+}
+
 func isSerice(node *Node) bool {
 	return strings.HasSuffix(node.Name, "Service")
 }
@@ -91,7 +95,7 @@ func parseRelation(node *Node, result *parseResult) {
 		if isRepo(node) {
 			repos[src] = NewRepository(src)
 		}
-		if strings.HasSuffix(src, "Provider") {
+		if isProvider(node) {
 			providers[src] = NewProvider(src)
 		}
 	}
@@ -262,6 +266,9 @@ func ParseCodeSolutionModel(codeDir string, layers []string) *BCModel {
 			}
 			if service, ok := services[o]; ok {
 				model.AddServiceToLayer(key, service)
+			}
+			if provider, ok := providers[o]; ok && key == "services" {
+				model.AddProviderToLayer(key, provider)
 			}
 		}
 	}

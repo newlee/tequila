@@ -5,6 +5,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"strings"
 )
 
 var _ = Describe("Viz", func() {
@@ -13,9 +14,10 @@ var _ = Describe("Viz", func() {
 			codeDir := "../examples/bc-code/html"
 			result := ParseCodeDir(codeDir)
 			Expect(len(result.NodeList)).Should(Equal(12))
-
-			crossRefs := result.FindCrossRef()
-
+			var mergeFunc = func(input string) string {
+				return strings.Replace(strings.Replace(input, ".h", "", -1), ".cpp", "", -1)
+			}
+			crossRefs := result.FindCrossRef(mergeFunc)
 			Expect(len(crossRefs)).Should(Equal(0), "Cross references: %v", crossRefs)
 		})
 	})

@@ -6,14 +6,24 @@ import (
 
 type layer interface {
 	Add(name, comment string)
+	getNodes() []string
 	addRelations(src string, dsts []string)
+	getRelations() map[string][]string
 	compare(other interface{}) bool
 }
 
 type Layer struct {
-	name  string
+	Name  string
 	nodes map[string]string
 	layer layer
+}
+
+func (layer *Layer) GetNodes() []string {
+	return layer.layer.getNodes()
+}
+
+func (layer *Layer) GetRelations() map[string][]string {
+	return layer.layer.getRelations()
 }
 
 type BCModel struct {
@@ -106,6 +116,92 @@ func (layer *ApiLayer) Add(name, comment string) {
 	}
 }
 
+func (layer *DomainLayer) getNodes() []string {
+	result := make([]string, 0)
+	for key := range layer.ARs {
+		result = append(result, layer.ARs[key].name)
+	}
+	for key := range layer.es {
+		result = append(result, layer.es[key].name)
+	}
+
+	for key := range layer.vos {
+		result = append(result, layer.vos[key].name)
+	}
+	return result
+}
+
+func (layer *ServiceLayer) getNodes() []string {
+	result := make([]string, 0)
+	for key := range layer.Services {
+		result = append(result, layer.Services[key].name)
+	}
+	for key := range layer.Providers {
+		result = append(result, layer.Providers[key].name)
+	}
+	return result
+}
+
+func (layer *RepoLayer) getNodes() []string {
+	result := make([]string, 0)
+	for key := range layer.Repos {
+		result = append(result, layer.Repos[key].name)
+	}
+	return result
+}
+
+func (layer *GatewayLayer) getNodes() []string {
+	result := make([]string, 0)
+	return result
+}
+
+func (layer *ApiLayer) getNodes() []string {
+	result := make([]string, 0)
+	return result
+}
+
+func (layer *DomainLayer) getRelations() map[string][]string {
+	result := make(map[string][]string)
+	for key := range layer.ARs {
+		ar := layer.ARs[key]
+		result[ar.name] = make([]string, 0)
+		for _, entity := range ar.Entities {
+			result[ar.name] = append(result[ar.name], entity.name)
+		}
+		for _, vo := range ar.VOs {
+			result[ar.name] = append(result[ar.name], vo.name)
+		}
+	}
+	return result
+}
+func (layer *RepoLayer) getRelations() map[string][]string {
+	result := make(map[string][]string)
+	for key := range layer.Repos {
+		repo := layer.Repos[key]
+		result[repo.name] = make([]string, 0)
+		result[repo.name] = append(result[repo.name], repo.For)
+	}
+	return result
+}
+func (layer *ServiceLayer) getRelations() map[string][]string {
+	result := make(map[string][]string)
+	for key := range layer.Services {
+		service := layer.Services[key]
+		result[service.name] = service.Refs
+	}
+
+	return result
+}
+func (layer *ApiLayer) getRelations() map[string][]string {
+	result := make(map[string][]string)
+
+	return result
+}
+func (layer *GatewayLayer) getRelations() map[string][]string {
+	result := make(map[string][]string)
+
+	return result
+}
 func newLayer(name string) layer {
 	if name == "domain" {
 		return &DomainLayer{ARs: make(map[string]*Entity),
@@ -133,7 +229,7 @@ func newLayer(name string) layer {
 
 func (model *BCModel) AppendLayer(name string) {
 	if _, ok := model.Layers[name]; !ok {
-		model.Layers[name] = &Layer{name: name, nodes: make(map[string]string), layer: newLayer(name)}
+		model.Layers[name] = &Layer{Name: name, nodes: make(map[string]string), layer: newLayer(name)}
 	}
 }
 
@@ -162,12 +258,25 @@ func (model *BCModel) AddRepoToLayer(layerName string, repo *Repository) {
 
 func (model *BCModel) AddARToLayer(layerName string, ar *Entity) {
 	layer := model.Layers[layerName]
-	layer.layer.(*DomainLayer).ARs[ar.name] = ar
+	domainLayer := layer.layer.(*DomainLayer)
+	domainLayer.ARs[ar.name] = ar
+	//TODO: recursive entitys
+	for _, entity := range ar.Entities {
+		domainLayer.es[entity.name] = entity
+	}
+	for _, vo := range ar.VOs {
+		domainLayer.vos[vo.name] = vo
+	}
 }
 
 func (model *BCModel) AddServiceToLayer(layerName string, service *Service) {
 	layer := model.Layers[layerName]
 	layer.layer.(*ServiceLayer).Services[service.name] = service
+}
+
+func (model *BCModel) AddProviderToLayer(layerName string, provider *Provider) {
+	layer := model.Layers[layerName]
+	layer.layer.(*ServiceLayer).Providers[provider.name] = provider
 }
 
 func (layer *DomainLayer) addEntityRelations(src string, dsts []string) {

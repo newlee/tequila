@@ -1,7 +1,6 @@
 package main_test
 
 import (
-	"fmt"
 	. "github.com/newlee/tequila"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -27,8 +26,8 @@ var _ = Describe("Tequila", func() {
 			codeDir := "examples/bc-code/html"
 			codeModel := ParseCodeSolutionModel(codeDir, []string{"domain", "repositories", "gateways", "services", "api"})
 
-			fmt.Println(codeModel)
 			Expect(bcModel.Compare(codeModel)).Should(BeNil())
 		})
+
 	})
 })
