@@ -25,13 +25,19 @@ var _ = Describe("Viz", func() {
 		It("merge header files", func() {
 			codeDir := "../examples/bc-code/html"
 			fullGraph := ParseCodeDir(codeDir)
-			var mergeFunc = func(input string) string {
-				return strings.Replace(strings.Replace(input, ".h", "", -1), ".cpp", "", -1)
-			}
 
-			result := fullGraph.MergeHeaderFile(mergeFunc)
+			result := fullGraph.MergeHeaderFile(MergeHeaderFunc)
 			Expect(len(result.NodeList)).Should(Equal(8))
 			Expect(len(result.RelationList)).Should(Equal(10))
+		})
+
+		It("merge package", func() {
+			codeDir := "../examples/bc-code/html"
+			fullGraph := ParseCodeDir(codeDir)
+
+			result := fullGraph.MergeHeaderFile(MergePackageFunc)
+			Expect(len(result.NodeList)).Should(Equal(6))
+			Expect(len(result.RelationList)).Should(Equal(8))
 		})
 	})
 })

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	. "github.com/newlee/tequila/viz"
 	"github.com/spf13/cobra"
-	"strings"
 )
 
 var includeCmd = &cobra.Command{
@@ -13,16 +12,9 @@ var includeCmd = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		result := ParseCodeDir(cmd.Flag("source").Value.String())
-		var mergeFunc = func(input string) string {
-			tmp := strings.Split(input, ".")
-			if len(tmp) > 1 {
-				return strings.Join(tmp[0:len(tmp)-1], ".")
-			}
-			return input
-		}
 
 		if cmd.Flag("findCrossRefs").Value.String() == "true" {
-			crossRefs := result.FindCrossRef(mergeFunc)
+			crossRefs := result.FindCrossRef(MergeHeaderFunc)
 			for _, cf := range crossRefs {
 				fmt.Println(cf)
 			}
@@ -30,7 +22,11 @@ var includeCmd = &cobra.Command{
 		}
 
 		if cmd.Flag("mergeHeader").Value.String() == "true" {
-			result = result.MergeHeaderFile(mergeFunc)
+			result = result.MergeHeaderFile(MergeHeaderFunc)
+		}
+
+		if cmd.Flag("mergePackage").Value.String() == "true" {
+			result = result.MergeHeaderFile(MergePackageFunc)
 		}
 
 		result.ToDot(cmd.Flag("output").Value.String())
@@ -43,5 +39,6 @@ func init() {
 	includeCmd.Flags().StringP("source", "s", "", "source code directory")
 	includeCmd.Flags().StringP("output", "o", "dep.dot", "output dot file name")
 	includeCmd.Flags().BoolP("findCrossRefs", "F", false, "find cross references")
-	includeCmd.Flags().BoolP("mergeHeader", "M", false, "merge header file to same cpp file")
+	includeCmd.Flags().BoolP("mergeHeader", "H", false, "merge header file to same cpp file")
+	includeCmd.Flags().BoolP("mergePackage", "P", false, "merge package/folder for include dependencies")
 }
