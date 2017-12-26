@@ -43,7 +43,7 @@ var _ = Describe("Viz", func() {
 	Context("Parse all collaboration", func() {
 		It("bc code", func() {
 			codeDir := "../examples/step2-Java/html"
-			result := ParseColl(codeDir)
+			result := ParseColl(codeDir, "coll__graph.dot")
 			Expect(len(result.NodeList)).Should(Equal(13))
 			Expect(len(result.RelationList)).Should(Equal(15))
 			result.ToDot("../dep.dot", ".")
