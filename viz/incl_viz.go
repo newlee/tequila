@@ -68,6 +68,27 @@ func (f *FullGraph) MergeHeaderFile(merge func(string) string) *FullGraph {
 	return result
 }
 
+func (f *FullGraph) EntryPoints(merge func(string) string) []string  {
+	mergedGraph := f.MergeHeaderFile(merge)
+	fromMap := make(map[string]bool)
+	toMap := make(map[string]bool)
+	for key := range mergedGraph.RelationList {
+		relation := mergedGraph.RelationList[key]
+		if relation.From == "main" {
+			continue
+		}
+		fromMap[relation.From] =true
+		toMap[relation.To] = true
+	}
+	result := make([]string, 0)
+	for key := range fromMap {
+		if _, ok := toMap[key]; !ok {
+			result = append(result, key)
+		}
+	}
+	return result
+}
+
 var fullGraph *FullGraph
 
 func parseRelation(edge *gographviz.Edge, nodes map[string]string) {
@@ -154,7 +175,7 @@ func ParseInclude(codeDir string) *FullGraph {
 	return fullGraph
 }
 
-func (fullGraph *FullGraph) ToDot(fileName string, split string) {
+func (fullGraph *FullGraph) ToDot(fileName string, split string, filter func(string)bool) {
 	graph := gographviz.NewGraph()
 	graph.SetName("G")
 
@@ -165,6 +186,10 @@ func (fullGraph *FullGraph) ToDot(fileName string, split string) {
 	layerMap := make(map[string][]string)
 
 	for nodeKey := range fullGraph.NodeList {
+		if filter(nodeKey) {
+			continue
+		}
+
 		tmp := strings.Split(nodeKey, split)
 		packageName := tmp[0]
 		if packageName == nodeKey {
@@ -199,7 +224,7 @@ func (fullGraph *FullGraph) ToDot(fileName string, split string) {
 
 	for key := range fullGraph.RelationList {
 		relation := fullGraph.RelationList[key]
-		if nodes[relation.From] != "" {
+		if nodes[relation.From] != "" && nodes[relation.To] != "" {
 			fromNode := nodes[relation.From]
 			toNode := nodes[relation.To]
 			attrs := make(map[string]string)

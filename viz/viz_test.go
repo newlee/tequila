@@ -6,6 +6,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"strings"
+	"fmt"
 )
 
 var _ = Describe("Viz", func() {
@@ -39,6 +40,15 @@ var _ = Describe("Viz", func() {
 			Expect(len(result.NodeList)).Should(Equal(6))
 			Expect(len(result.RelationList)).Should(Equal(8))
 		})
+
+		It("entry points", func() {
+			codeDir := "../examples/bc-code/html"
+			fullGraph := ParseInclude(codeDir)
+
+			entryPoints := fullGraph.EntryPoints(MergePackageFunc)
+			fmt.Println(entryPoints)
+			Expect(len(entryPoints)).Should(Equal(2))
+		})
 	})
 	Context("Parse all collaboration", func() {
 		It("bc code", func() {
@@ -46,7 +56,6 @@ var _ = Describe("Viz", func() {
 			result := ParseColl(codeDir, "coll__graph.dot")
 			Expect(len(result.NodeList)).Should(Equal(13))
 			Expect(len(result.RelationList)).Should(Equal(15))
-			result.ToDot("../dep.dot", ".")
 		})
 	})
 })

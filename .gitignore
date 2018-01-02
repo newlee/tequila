@@ -32,3 +32,5 @@ viz/merged_package.dot
 viz/merged_package.svg
 viz/dep.dot
 viz/dep.svg
+dep.dot
+dep.svg

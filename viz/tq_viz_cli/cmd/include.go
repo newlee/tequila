@@ -21,6 +21,14 @@ var includeCmd = &cobra.Command{
 			return
 		}
 
+		if cmd.Flag("entryPoints").Value.String() == "true" {
+			entryPoints := result.EntryPoints(MergeHeaderFunc)
+			for _, cf := range entryPoints {
+				fmt.Println(cf)
+			}
+			return
+		}
+
 		if cmd.Flag("mergeHeader").Value.String() == "true" {
 			result = result.MergeHeaderFile(MergeHeaderFunc)
 		}
@@ -28,8 +36,10 @@ var includeCmd = &cobra.Command{
 		if cmd.Flag("mergePackage").Value.String() == "true" {
 			result = result.MergeHeaderFile(MergePackageFunc)
 		}
-
-		result.ToDot(cmd.Flag("output").Value.String(), "/")
+		var filter = func(key string) bool {
+			return key == "main.cpp" || key == "main"
+		}
+		result.ToDot(cmd.Flag("output").Value.String(), "/", filter)
 	},
 }
 
@@ -39,6 +49,7 @@ func init() {
 	includeCmd.Flags().StringP("source", "s", "", "source code directory")
 	includeCmd.Flags().StringP("output", "o", "dep.dot", "output dot file name")
 	includeCmd.Flags().BoolP("findCrossRefs", "F", false, "find cross references")
+	includeCmd.Flags().BoolP("entryPoints", "E", false, "list entry points")
 	includeCmd.Flags().BoolP("mergeHeader", "H", false, "merge header file to same cpp file")
 	includeCmd.Flags().BoolP("mergePackage", "P", false, "merge package/folder for include dependencies")
 }
