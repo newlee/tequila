@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -19,6 +20,12 @@ type Relation struct {
 type FullGraph struct {
 	NodeList     map[string]string
 	RelationList map[string]*Relation
+}
+
+type Fan struct {
+	Name   string
+	FanIn  int
+	FanOut int
 }
 
 func (f *FullGraph) FindCrossRef(merge func(string) string) []string {
@@ -68,7 +75,7 @@ func (f *FullGraph) MergeHeaderFile(merge func(string) string) *FullGraph {
 	return result
 }
 
-func (f *FullGraph) EntryPoints(merge func(string) string) []string  {
+func (f *FullGraph) EntryPoints(merge func(string) string) []string {
 	mergedGraph := f.MergeHeaderFile(merge)
 	fromMap := make(map[string]bool)
 	toMap := make(map[string]bool)
@@ -77,7 +84,7 @@ func (f *FullGraph) EntryPoints(merge func(string) string) []string  {
 		if relation.From == "main" {
 			continue
 		}
-		fromMap[relation.From] =true
+		fromMap[relation.From] = true
 		toMap[relation.To] = true
 	}
 	result := make([]string, 0)
@@ -86,6 +93,28 @@ func (f *FullGraph) EntryPoints(merge func(string) string) []string  {
 			result = append(result, key)
 		}
 	}
+	return result
+}
+
+func (f *FullGraph) SortedByFan(merge func(string) string) []*Fan {
+	mergedGraph := f.MergeHeaderFile(merge)
+	result := make([]*Fan, len(mergedGraph.NodeList))
+	index := 0
+	fanMap := make(map[string]*Fan)
+	for key := range mergedGraph.NodeList {
+		fan := &Fan{Name: key}
+		result[index] = fan
+		fanMap[key] = fan
+		index++
+	}
+	for key := range mergedGraph.RelationList {
+		relation := mergedGraph.RelationList[key]
+		fanMap[relation.From].FanOut++
+		fanMap[relation.To].FanIn++
+	}
+	sort.Slice(result, func(i, j int) bool {
+		return (result[i].FanIn + result[i].FanOut) > (result[j].FanIn + result[j].FanOut)
+	})
 	return result
 }
 
@@ -175,7 +204,7 @@ func ParseInclude(codeDir string) *FullGraph {
 	return fullGraph
 }
 
-func (fullGraph *FullGraph) ToDot(fileName string, split string, filter func(string)bool) {
+func (fullGraph *FullGraph) ToDot(fileName string, split string, filter func(string) bool) {
 	graph := gographviz.NewGraph()
 	graph.SetName("G")
 

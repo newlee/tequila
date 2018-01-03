@@ -29,6 +29,15 @@ var includeCmd = &cobra.Command{
 			return
 		}
 
+		if cmd.Flag("fanInFanOut").Value.String() == "true" {
+			fans := result.SortedByFan(MergeHeaderFunc)
+			fmt.Println("Name\tTotal\tFan-In\tFan-Out")
+			for _, fan := range fans {
+				fmt.Printf("%s\t%v\t%v\t%v\n", fan.Name, fan.FanIn+fan.FanOut, fan.FanIn, fan.FanOut)
+			}
+			return
+		}
+
 		if cmd.Flag("mergeHeader").Value.String() == "true" {
 			result = result.MergeHeaderFile(MergeHeaderFunc)
 		}
@@ -48,7 +57,8 @@ func init() {
 
 	includeCmd.Flags().StringP("source", "s", "", "source code directory")
 	includeCmd.Flags().StringP("output", "o", "dep.dot", "output dot file name")
-	includeCmd.Flags().BoolP("findCrossRefs", "F", false, "find cross references")
+	includeCmd.Flags().BoolP("findCrossRefs", "C", false, "find cross references")
+	includeCmd.Flags().BoolP("fanInFanOut", "F", false, "sorted fan-in and fan-out")
 	includeCmd.Flags().BoolP("entryPoints", "E", false, "list entry points")
 	includeCmd.Flags().BoolP("mergeHeader", "H", false, "merge header file to same cpp file")
 	includeCmd.Flags().BoolP("mergePackage", "P", false, "merge package/folder for include dependencies")

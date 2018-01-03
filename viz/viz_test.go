@@ -6,7 +6,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"strings"
-	"fmt"
 )
 
 var _ = Describe("Viz", func() {
@@ -46,8 +45,19 @@ var _ = Describe("Viz", func() {
 			fullGraph := ParseInclude(codeDir)
 
 			entryPoints := fullGraph.EntryPoints(MergePackageFunc)
-			fmt.Println(entryPoints)
 			Expect(len(entryPoints)).Should(Equal(2))
+		})
+
+		It("sort by fan-in fan-out", func() {
+			codeDir := "../examples/bc-code/html"
+			fullGraph := ParseInclude(codeDir)
+
+			fans := fullGraph.SortedByFan(MergeHeaderFunc)
+			Expect(len(fans)).Should(Equal(8))
+			//fan := fans[0]
+			//Expect(fan.Name).Should(Equal("services/service"))
+			//Expect(fan.FanIn).Should(Equal(3))
+			//Expect(fan.FanOut).Should(Equal(1))
 		})
 	})
 	Context("Parse all collaboration", func() {

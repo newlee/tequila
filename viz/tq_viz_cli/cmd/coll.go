@@ -2,10 +2,10 @@ package cmd
 
 import (
 	//"fmt"
+	"fmt"
 	. "github.com/newlee/tequila/viz"
 	"github.com/spf13/cobra"
 	"strings"
-	"fmt"
 )
 
 var collCmd *cobra.Command = &cobra.Command{
@@ -25,6 +25,15 @@ var collCmd *cobra.Command = &cobra.Command{
 			entryPoints := result.EntryPoints(MergePackageFunc)
 			for _, cf := range entryPoints {
 				fmt.Println(cf)
+			}
+			return
+		}
+
+		if cmd.Flag("fanInFanOut").Value.String() == "true" {
+			fans := result.SortedByFan(MergePackageFunc)
+			fmt.Println("Name\tTotal\tFan-In\tFan-Out")
+			for _, fan := range fans {
+				fmt.Printf("%s\t%v\t%v\t%v\n", fan.Name, fan.FanIn+fan.FanOut, fan.FanIn, fan.FanOut)
 			}
 			return
 		}
@@ -50,5 +59,6 @@ func init() {
 	collCmd.Flags().StringP("ignore", "i", "main.cpp,main", "ignore")
 	collCmd.Flags().StringP("output", "o", "dep.dot", "output dot file name")
 	collCmd.Flags().BoolP("entryPoints", "E", false, "list entry points")
+	collCmd.Flags().BoolP("fanInFanOut", "F", false, "sorted fan-in and fan-out")
 	collCmd.Flags().BoolP("mergePackage", "P", false, "merge package/folder for include dependencies")
 }
