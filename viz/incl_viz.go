@@ -141,8 +141,11 @@ func parseDotFile(codeDotfile string) {
 	g, _ := gographviz.Read(fbuf)
 	nodes := make(map[string]string)
 	for _, node := range g.Nodes.Nodes {
-
 		fullMethodName := strings.Replace(node.Attrs["label"], "\"", "", 2)
+		if strings.Contains(fullMethodName, " ") {
+			tmp := strings.Split(fullMethodName, " ")
+			fullMethodName = tmp[len(tmp) - 1]
+		}
 		if strings.Contains(fullMethodName, "_test") {
 			continue
 		}
