@@ -17,8 +17,6 @@ struct CargoRepository: Repository
     CargoRepository();
     void Save(Cargo* cargo);
     Cargo* FindById(int id);
-private:
-    std::vector<Cargo*> cargo_list;
 };
 
 }
