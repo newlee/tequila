@@ -34,3 +34,10 @@ viz/dep.dot
 viz/dep.svg
 dep.dot
 dep.svg
+CMakeCache.txt
+CMakeFiles/
+CTestTestfile.cmake
+Makefile
+bc_demo
+bc_demo_test
+cmake_install.cmake

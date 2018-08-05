@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"fmt"
 )
 
 type Relation struct {
@@ -125,7 +126,8 @@ func parseRelation(edge *gographviz.Edge, nodes map[string]string) {
 		if _, ok := nodes[edge.Dst]; ok {
 			dst := nodes[edge.Dst]
 			src := nodes[edge.Src]
-
+			dst = strings.ToLower(dst)
+			src = strings.ToLower(src)
 			relation := &Relation{
 				From:  dst,
 				To:    src,
@@ -136,6 +138,21 @@ func parseRelation(edge *gographviz.Edge, nodes map[string]string) {
 	}
 }
 
+func filterDirectory(fullMethodName string) bool {
+	if strings.Contains(fullMethodName, "_test") {
+		return true
+	}
+
+	if strings.Contains(fullMethodName, "Test") {
+		return true
+	}
+
+	if strings.Contains(fullMethodName, "/Library/") {
+		return true
+	}
+	return false
+}
+
 func parseDotFile(codeDotfile string) {
 	fbuf, _ := ioutil.ReadFile(codeDotfile)
 	g, _ := gographviz.Read(fbuf)
@@ -144,23 +161,13 @@ func parseDotFile(codeDotfile string) {
 		fullMethodName := strings.Replace(node.Attrs["label"], "\"", "", 2)
 		if strings.Contains(fullMethodName, " ") {
 			tmp := strings.Split(fullMethodName, " ")
-			fullMethodName = tmp[len(tmp) - 1]
+			fullMethodName = tmp[len(tmp)-1]
 		}
-		if strings.Contains(fullMethodName, "_test") {
+		if filterDirectory(fullMethodName) {
 			continue
 		}
 
-		if strings.Contains(fullMethodName, "Test") {
-			continue
-		}
-
-		if strings.Contains(fullMethodName, "/Library/") {
-			continue
-		}
-
-		methodName := strings.Replace(fullMethodName, "\\l", "", -1)
-		methodName = strings.Replace(methodName, "src/", "", -1)
-		methodName = strings.Replace(methodName, "include/", "", -1)
+		methodName := formatMethodName(fullMethodName)
 		fullGraph.NodeList[methodName] = methodName
 		nodes[node.Name] = methodName
 	}
@@ -172,12 +179,19 @@ func parseDotFile(codeDotfile string) {
 		}
 	}
 }
+func formatMethodName(fullMethodName string) string {
+	methodName := strings.Replace(fullMethodName, "\\l", "", -1)
+	methodName = strings.Replace(methodName, "src/", "", -1)
+	methodName = strings.Replace(methodName, "include/", "", -1)
+	methodName = strings.ToLower(methodName)
+	return methodName
+}
 
-func codeDotFiles(codeDir string, fileFilter string) []string {
+func codeDotFiles(codeDir string, fileFilter func(string) bool) []string {
 	codeDotFiles := make([]string, 0)
 	filepath.Walk(codeDir, func(path string, fi os.FileInfo, err error) error {
 		if strings.HasSuffix(path, ".dot") {
-			if strings.HasSuffix(path, fileFilter) {
+			if fileFilter(path) {
 				//return nil
 				if strings.Contains(path, "_test_") {
 					return nil
@@ -198,7 +212,10 @@ func ParseInclude(codeDir string) *FullGraph {
 		NodeList:     make(map[string]string),
 		RelationList: make(map[string]*Relation),
 	}
-	codeDotFiles := codeDotFiles(codeDir, "_dep__incl.dot")
+	codeDotFiles := codeDotFiles(codeDir, func(path string) bool {
+
+		return strings.HasSuffix(path, "_dep__incl.dot")
+	})
 
 	for _, codeDotfile := range codeDotFiles {
 		parseDotFile(codeDotfile)
@@ -269,4 +286,35 @@ func (fullGraph *FullGraph) ToDot(fileName string, split string, filter func(str
 	w := bufio.NewWriter(f)
 	w.WriteString("di" + graph.String())
 	w.Flush()
+}
+var Foo = func() string{
+	return ""
+}
+func (fullGraph *FullGraph) ToDataSet(fileName string, split string, filter func(string) bool) {
+	nodes := make(map[string]string)
+
+	for nodeKey := range fullGraph.NodeList {
+		if filter(nodeKey) {
+			continue
+		}
+
+		nodes[nodeKey] = nodeKey
+	}
+
+	relMap := make(map[string][]string)
+	for key := range fullGraph.RelationList {
+		relation := fullGraph.RelationList[key]
+
+		if nodes[relation.From] == "" && nodes[relation.To] != "" {
+			if _, ok := relMap[relation.From]; !ok {
+				relMap[relation.From] = make([]string, 0)
+			}
+			relMap[relation.From] = append(relMap[relation.From], relation.To)
+		}
+	}
+
+	for key := range relMap {
+		tos := relMap[key]
+		fmt.Print("['" + strings.Join(tos, "','") + "'],")
+	}
 }
