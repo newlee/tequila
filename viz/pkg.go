@@ -8,7 +8,10 @@ import (
 
 type Procedure struct {
 	Name string
+	FullName string
 	Count int
+	CallProcedures map[string]*Procedure
+	BePrint bool
 }
 
 type Pkg struct {
@@ -20,8 +23,16 @@ type AllPkg struct {
 	Pkgs map[string]*Pkg
 }
 
+type AllProcedure struct {
+	Procedures map[string]*Procedure
+}
+
 func NewAllPkg() *AllPkg  {
 	return &AllPkg{Pkgs:make(map[string]*Pkg)}
+}
+
+func NewAllProcedure() *AllProcedure  {
+	return &AllProcedure{Procedures:make(map[string]*Procedure)}
 }
 
 func (all *AllPkg) Add(pkgName, procedure string) {
@@ -37,6 +48,53 @@ func (all *AllPkg) Add(pkgName, procedure string) {
 	pkg.Procedures[procedure].Count++
 }
 
+func (all *AllProcedure) Add(pkgName, procedure string) {
+	fullName := procedure
+	if pkgName != "" {
+		fullName = pkgName + "." + procedure
+	}
+
+	if _, ok := all.Procedures[fullName]; !ok {
+		all.Procedures[fullName] = &Procedure {Name:procedure, FullName: fullName, CallProcedures:make(map[string]*Procedure)}
+	}
+}
+
+func (all *AllProcedure) AddCall(pkgName, procedure,callPkgName,callProcedure string) {
+	fullName := procedure
+	if pkgName != "" {
+		fullName = pkgName + "." + procedure
+	}
+	cFullName := callProcedure
+	if callPkgName != "" {
+		cFullName = callPkgName + "." + callProcedure
+	}
+
+	if _, ok := all.Procedures[fullName]; ok {
+		p:= all.Procedures[fullName]
+		if _, ok := all.Procedures[cFullName]; ok {
+			p.CallProcedures[cFullName] =all.Procedures[cFullName]
+		}
+	}
+}
+
+func (all *AllPkg) Exist(name string) bool {
+	if _, ok := all.Pkgs[name]; ok {
+		return true
+	}
+
+	return false
+}
+
+func (all *AllPkg) ExistSp(name string, procedure string) bool {
+	if _, ok := all.Pkgs[name]; ok {
+		if _, ok := all.Pkgs[name].Procedures[procedure]; ok {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (all *AllPkg) Print() {
 	pkgs := make([]*Pkg,0)
 	for key := range all.Pkgs {
@@ -50,6 +108,31 @@ func (all *AllPkg) Print() {
 		pkg.Print()
 	}
 }
+
+var pTree map[string]string
+
+func (all *AllProcedure) Print(fullName string) map[string]string{
+	pTree = make(map[string]string)
+	if _, ok := all.Procedures[fullName]; ok {
+		all.Procedures[fullName].Print(fullName)
+	}
+	fmt.Println(len(pTree))
+	return pTree
+}
+
+func (p *Procedure) Print(fullName string)  {
+	if p.BePrint {
+		return
+	}
+	p.BePrint = true
+	for key, procedure := range p.CallProcedures {
+		if key != fullName {
+			pTree[fmt.Sprintf("%s -> %s", fullName, key)] = ""
+			procedure.Print(key)
+		}
+	}
+}
+
 func (pkg *Pkg) Print() {
 	procedures := make([]*Procedure,0)
 	count := 0

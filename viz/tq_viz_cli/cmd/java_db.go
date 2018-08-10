@@ -22,7 +22,7 @@ var javaDbCmd *cobra.Command = &cobra.Command{
 
 		codeFiles := make([]string, 0)
 		filepath.Walk(source, func(path string, fi os.FileInfo, err error) error {
-			if strings.HasSuffix(path, ".java") && !strings.Contains(path, "com/ebao/life/claim/") {
+			if strings.HasSuffix(path, ".java")  {
 				codeFiles = append(codeFiles, path)
 			}
 			split := strings.Split(filter, ",")
@@ -85,7 +85,10 @@ var javaDbCmd *cobra.Command = &cobra.Command{
 								split := strings.Split(codeFileName, "/")
 								pkgCallerFiles[split[len(split) - 1]] = ""
 								sp := spss[1]
-								allPkg.Add(pkg, sp)
+								if strings.HasPrefix(sp, "P_"){
+									allPkg.Add(pkg, sp)
+								}
+
 							}
 
 						}
