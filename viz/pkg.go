@@ -6,12 +6,42 @@ import (
 	"fmt"
 )
 
+type RW struct {
+	R bool
+	W bool
+}
+
+func (rw *RW) merge(rw2 *RW) {
+	if !rw.R && rw2.R {
+		rw.R = true
+	}
+
+	if !rw.W && rw2.W {
+		rw.W = true
+	}
+}
+
+func (rw *RW) ToString() string {
+	if rw.R && rw.W {
+		return "R,W"
+	}
+
+	if rw.R {
+		return "R"
+	}
+
+	if rw.W {
+		return "W"
+	}
+	return ""
+}
 type Procedure struct {
 	Name string
 	FullName string
 	Count int
 	CallProcedures map[string]*Procedure
 	BePrint bool
+	Tables map[string]*RW
 }
 
 type Pkg struct {
@@ -55,7 +85,7 @@ func (all *AllProcedure) Add(pkgName, procedure string) {
 	}
 
 	if _, ok := all.Procedures[fullName]; !ok {
-		all.Procedures[fullName] = &Procedure {Name:procedure, FullName: fullName, CallProcedures:make(map[string]*Procedure)}
+		all.Procedures[fullName] = &Procedure {Name:procedure, FullName: fullName, CallProcedures:make(map[string]*Procedure), Tables:make(map[string]*RW)}
 	}
 }
 
@@ -73,6 +103,26 @@ func (all *AllProcedure) AddCall(pkgName, procedure,callPkgName,callProcedure st
 		p:= all.Procedures[fullName]
 		if _, ok := all.Procedures[cFullName]; ok {
 			p.CallProcedures[cFullName] =all.Procedures[cFullName]
+		}
+	}
+}
+
+func (all *AllProcedure) AddTable(pkgName, procedure,table string, isWrite bool) {
+	fullName := procedure
+	if pkgName != "" {
+		fullName = pkgName + "." + procedure
+	}
+
+	if _, ok := all.Procedures[fullName]; ok {
+		p:= all.Procedures[fullName]
+		tables := p.Tables
+		if _, ok := tables[table]; !ok {
+			tables[table] = &RW{}
+		}
+		if isWrite {
+			tables[table].W = true
+		}else{
+			tables[table].R = true
 		}
 	}
 }
@@ -110,14 +160,16 @@ func (all *AllPkg) Print() {
 }
 
 var pTree map[string]string
+var pTables map[string]*RW
 
-func (all *AllProcedure) Print(fullName string) map[string]string{
+func (all *AllProcedure) Print(fullName string) (map[string]string, map[string]*RW){
 	pTree = make(map[string]string)
+	pTables = make(map[string]*RW)
 	if _, ok := all.Procedures[fullName]; ok {
 		all.Procedures[fullName].Print(fullName)
 	}
 	fmt.Println(len(pTree))
-	return pTree
+	return pTree, pTables
 }
 
 func (p *Procedure) Print(fullName string)  {
@@ -125,6 +177,13 @@ func (p *Procedure) Print(fullName string)  {
 		return
 	}
 	p.BePrint = true
+	for table, rw := range p.Tables {
+		if _, ok := pTables[table]; !ok {
+			pTables[table] = rw
+		}else{
+			pTables[table].merge(rw)
+		}
+	}
 	for key, procedure := range p.CallProcedures {
 		if key != fullName {
 			pTree[fmt.Sprintf("%s -> %s", fullName, key)] = ""

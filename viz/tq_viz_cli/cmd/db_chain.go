@@ -9,6 +9,8 @@ import (
 	"github.com/newlee/tequila/viz"
 	"github.com/awalterschulze/gographviz"
 	"strconv"
+	"fmt"
+	"sort"
 )
 
 var DbChainCmd *cobra.Command = &cobra.Command{
@@ -130,12 +132,36 @@ var DbChainCmd *cobra.Command = &cobra.Command{
 						}
 					}
 				}
+
+				if strings.Contains(line," T_") || strings.Contains(line, ",T_") {
+					tmp := strings.FieldsFunc(line, func(r rune) bool {
+						return r == ' ' || r == ',' || r == '.' || r=='"' || r == ':' || r == '(' ||  r == ')' ||  r == '）' ||  r == '%' ||  r == '!' ||  r == '\''
+					})
+					for _, t3 := range tmp {
+						if strings.HasPrefix(t3,"T_") {
+							isWrite := strings.Contains(line, "INSERT ") || strings.Contains(line, "UPDATE ") ||strings.Contains(line, "DELETE ")
+							allP.AddTable(pkg, procedure, t3, isWrite)
+						}
+
+					}
+				}
 			}
 
 			codeFile.Close()
 		}
+		pTree,pTables := allP.Print(point)
 
-		pTree := allP.Print(point)
+		tables := make([]string,0)
+		for key, rw := range pTables {
+			tables = append(tables, fmt.Sprintf("%s [%s]", key,rw.ToString()))
+		}
+		sort.Slice(tables, func(i, j int) bool {
+			return strings.Compare(tables[i], tables[j] ) < 0
+		})
+
+		for _, t := range tables {
+			fmt.Printf("%s\n", t)
+		}
 		graph := gographviz.NewGraph()
 		graph.SetName("G")
 
@@ -144,23 +170,51 @@ var DbChainCmd *cobra.Command = &cobra.Command{
 
 		for key := range pTree {
 			tmp := strings.Split(key, " -> ")
-			nodes[tmp[0]] = ""
-			nodes[tmp[1]] = ""
+			if cmd.Flag("mergePackage").Value.String() == "true" {
+				nodes[strings.Split(tmp[0], ".")[0]] = ""
+				nodes[strings.Split(tmp[1], ".")[0]] = ""
+			}else{
+				nodes[tmp[0]] = ""
+				nodes[tmp[1]] = ""
+			}
 		}
 
+		owner := cmd.Flag("key").Value.String()
 		for node := range nodes {
 			attrs := make(map[string]string)
 			attrs["label"] = "\"" + node + "\""
 			attrs["shape"] = "box"
+			if owner != "" {
+				if strings.Contains(node, owner) {
+					attrs["color"] = "greenyellow"
+					attrs["style"] = "filled"
+				}else{
+					attrs["color"] = "orange"
+					attrs["style"] = "filled"
+				}
+			}
+
 			graph.AddNode("G", "node"+strconv.Itoa(nodeIndex), attrs)
 			nodes[node] = "node" + strconv.Itoa(nodeIndex)
 			nodeIndex++
 		}
-
+		relations := make(map[string]string)
 		for key := range pTree {
 			attrs := make(map[string]string)
 			tmp := strings.Split(key, " -> ")
-			graph.AddEdge(nodes[tmp[0]], nodes[tmp[1]], true, attrs)
+			if cmd.Flag("mergePackage").Value.String() == "true" {
+				pName0 := strings.Split(tmp[0], ".")[0]
+				pName1 := strings.Split(tmp[1], ".")[0]
+
+				if pName0 != pName1 {
+					if _, ok := relations[pName0+pName1]; !ok {
+						relations[pName0+pName1] = ""
+						graph.AddEdge(nodes[pName0], nodes[pName1], true, attrs)
+					}
+				}
+			}else{
+				graph.AddEdge(nodes[tmp[0]], nodes[tmp[1]], true, attrs)
+			}
 		}
 
 		f, _ := os.Create(cmd.Flag("output").Value.String())
@@ -176,5 +230,7 @@ func init() {
 
 	DbChainCmd.Flags().StringP("source", "s", "", "source code directory")
 	DbChainCmd.Flags().StringP("point", "p", "", "input point")
+	DbChainCmd.Flags().StringP("key", "k", "", "owner key")
 	DbChainCmd.Flags().StringP("output", "o", "tree.dot", "output dot file name")
+	DbChainCmd.Flags().BoolP("mergePackage", "P", false, "merge package/folder for include dependencies")
 }
