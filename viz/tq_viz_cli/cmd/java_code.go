@@ -1,12 +1,12 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
-	"path/filepath"
-	"os"
-	"strings"
 	"bufio"
 	"github.com/newlee/tequila/viz"
+	"github.com/spf13/cobra"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 var javaCodeCmd *cobra.Command = &cobra.Command{
@@ -29,13 +29,13 @@ var javaCodeCmd *cobra.Command = &cobra.Command{
 			codeFile, _ := os.Open(codeFileName)
 			scanner := bufio.NewScanner(codeFile)
 			scanner.Split(bufio.ScanLines)
-			var pkg *viz.Package;
+			var pkg *viz.Package
 			for scanner.Scan() {
 				line := scanner.Text()
 
 				if strings.HasPrefix(line, "package") && !strings.Contains(line, call) {
 					tmp := strings.FieldsFunc(line, func(r rune) bool {
-						return r == ' ' || r== ';'
+						return r == ' ' || r == ';'
 					})
 					//fmt.Println(tmp[1])
 					pkg = allPackage.Add(tmp[1])
@@ -43,7 +43,7 @@ var javaCodeCmd *cobra.Command = &cobra.Command{
 
 				if pkg != nil && strings.HasPrefix(line, "import") && strings.Contains(line, call) {
 					tmp := strings.FieldsFunc(line, func(r rune) bool {
-						return r == ' ' || r== ';'
+						return r == ' ' || r == ';'
 					})
 					importPkg := tmp[1]
 

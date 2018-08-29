@@ -2,6 +2,7 @@ package viz
 
 import (
 	"bufio"
+	"fmt"
 	"github.com/awalterschulze/gographviz"
 	"io/ioutil"
 	"os"
@@ -9,7 +10,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"fmt"
 )
 
 type Relation struct {
@@ -36,7 +36,9 @@ func (f *FullGraph) FindCrossRef(merge func(string) string) []string {
 		relation := f.RelationList[key]
 		mergedFrom := merge(relation.From)
 		mergedTo := merge(relation.To)
-
+		if mergedFrom == mergedTo {
+			continue
+		}
 		if _, ok := mergedRelationMap[mergedTo+mergedFrom]; ok {
 			result = append(result, mergedFrom+" <-> "+mergedTo)
 		}
@@ -155,7 +157,13 @@ func filterDirectory(fullMethodName string) bool {
 
 func parseDotFile(codeDotfile string) {
 	fbuf, _ := ioutil.ReadFile(codeDotfile)
-	g, _ := gographviz.Read(fbuf)
+	parseFromBuffer(fbuf)
+}
+func parseFromBuffer(fbuf []byte) {
+	g, err := gographviz.Read(fbuf)
+	if err != nil {
+		fmt.Println(string(fbuf))
+	}
 	nodes := make(map[string]string)
 	for _, node := range g.Nodes.Nodes {
 		fullMethodName := strings.Replace(node.Attrs["label"], "\"", "", 2)
@@ -287,9 +295,11 @@ func (fullGraph *FullGraph) ToDot(fileName string, split string, filter func(str
 	w.WriteString("di" + graph.String())
 	w.Flush()
 }
-var Foo = func() string{
+
+var Foo = func() string {
 	return ""
 }
+
 func (fullGraph *FullGraph) ToDataSet(fileName string, split string, filter func(string) bool) {
 	nodes := make(map[string]string)
 

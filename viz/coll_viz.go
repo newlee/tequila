@@ -1,6 +1,8 @@
 package viz
 
-import "strings"
+import (
+	"strings"
+)
 
 func ParseColl(codeDir string, filter string) *FullGraph {
 	fullGraph = &FullGraph{
@@ -31,5 +33,20 @@ func ParseICallGraph(codeDir string, filter string) *FullGraph {
 		parseDotFile(codeDotfile)
 	}
 
+	return fullGraph
+}
+
+func ParseICallGraphStart() {
+	fullGraph = &FullGraph{
+		NodeList:     make(map[string]string),
+		RelationList: make(map[string]*Relation),
+	}
+}
+
+func ParseICallGraphByBuffer(buf []byte) {
+	parseFromBuffer(buf)
+}
+
+func ParseICallGraphEnd() *FullGraph {
 	return fullGraph
 }

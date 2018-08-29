@@ -1,16 +1,16 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
-	"strings"
-	"path/filepath"
-	"os"
 	"bufio"
-	"github.com/newlee/tequila/viz"
-	"github.com/awalterschulze/gographviz"
-	"strconv"
 	"fmt"
+	"github.com/awalterschulze/gographviz"
+	"github.com/newlee/tequila/viz"
+	"github.com/spf13/cobra"
+	"os"
+	"path/filepath"
 	"sort"
+	"strconv"
+	"strings"
 )
 
 var DbChainCmd *cobra.Command = &cobra.Command{
@@ -38,25 +38,25 @@ var DbChainCmd *cobra.Command = &cobra.Command{
 				line := scanner.Text()
 				line = strings.ToUpper(line)
 
-				if strings.Contains(line,"PKG_")  && strings.Contains(line,"CREATE") {
+				if strings.Contains(line, "PKG_") && strings.Contains(line, "CREATE") {
 					tmp := strings.FieldsFunc(line, func(r rune) bool {
-						return r == ' ' || r== '(' || r== ',' || r== '\''|| r== '"'
+						return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"'
 					})
 
 					for _, key := range tmp {
-						if strings.HasPrefix(key,"PKG_") {
+						if strings.HasPrefix(key, "PKG_") {
 							pkg = key
 						}
 					}
 				}
 
-				if strings.Contains(line,"PROCEDURE")  && strings.Contains(line,"P_") {
+				if strings.Contains(line, "PROCEDURE") && strings.Contains(line, "P_") {
 					tmp := strings.FieldsFunc(line, func(r rune) bool {
-						return r == ' ' || r== '(' || r== ',' || r== '\''|| r== '"'
+						return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"'
 					})
 
 					for _, key := range tmp {
-						if strings.HasPrefix(key,"P_") {
+						if strings.HasPrefix(key, "P_") {
 							allP.Add(pkg, key)
 						}
 					}
@@ -77,42 +77,42 @@ var DbChainCmd *cobra.Command = &cobra.Command{
 				line := scanner.Text()
 				line = strings.ToUpper(line)
 
-				if strings.Contains(line,"PKG_")  && strings.Contains(line,"CREATE") {
+				if strings.Contains(line, "PKG_") && strings.Contains(line, "CREATE") {
 					tmp := strings.FieldsFunc(line, func(r rune) bool {
-						return r == ' ' || r== '(' || r== ',' || r== '\''|| r== '"'
+						return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"'
 					})
 
 					for _, key := range tmp {
-						if strings.HasPrefix(key,"PKG_") {
+						if strings.HasPrefix(key, "PKG_") {
 							pkg = key
 						}
 					}
 				}
 
-				if strings.Contains(line,"PROCEDURE")  && strings.Contains(line,"P_") {
+				if strings.Contains(line, "PROCEDURE") && strings.Contains(line, "P_") {
 					tmp := strings.FieldsFunc(line, func(r rune) bool {
-						return r == ' ' || r== '(' || r== ',' || r== '\''|| r== '"'
+						return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"'
 					})
 
 					for _, key := range tmp {
-						if strings.HasPrefix(key,"P_") {
+						if strings.HasPrefix(key, "P_") {
 							procedure = key
 						}
 					}
 				}
 
-				if strings.Contains(line,"PKG_")  && strings.Contains(line,"(") {
+				if strings.Contains(line, "PKG_") && strings.Contains(line, "(") {
 					tmp := strings.FieldsFunc(line, func(r rune) bool {
-						return r == ' ' || r== '(' || r== ',' || r== '\''|| r== '"' || r== ')'
+						return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"' || r == ')'
 					})
 
 					for _, key := range tmp {
-						if strings.HasPrefix(key,"PKG_") {
-							sk := strings.Replace(key,"\"" ,"", -1)
+						if strings.HasPrefix(key, "PKG_") {
+							sk := strings.Replace(key, "\"", "", -1)
 							spss := strings.Split(sk, ".")
-							if len(spss) > 1 && strings.Contains(pkg,"PKG_") {
+							if len(spss) > 1 && strings.Contains(pkg, "PKG_") {
 								sp := spss[1]
-								if strings.HasPrefix(sp, "P_"){
+								if strings.HasPrefix(sp, "P_") {
 									allP.AddCall(pkg, procedure, spss[0], spss[1])
 								}
 
@@ -121,25 +121,25 @@ var DbChainCmd *cobra.Command = &cobra.Command{
 					}
 				}
 
-				if strings.Contains(line,"P_")  && strings.Contains(line,"(") {
+				if strings.Contains(line, "P_") && strings.Contains(line, "(") {
 					tmp := strings.FieldsFunc(line, func(r rune) bool {
-						return r == ' ' || r== '(' || r== ',' || r== '\''|| r== '"' || r== ')'
+						return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"' || r == ')'
 					})
 
 					for _, key := range tmp {
-						if strings.HasPrefix(key,"P_") {
+						if strings.HasPrefix(key, "P_") {
 							allP.AddCall(pkg, procedure, pkg, key)
 						}
 					}
 				}
 
-				if strings.Contains(line," T_") || strings.Contains(line, ",T_") {
+				if strings.Contains(line, " T_") || strings.Contains(line, ",T_") {
 					tmp := strings.FieldsFunc(line, func(r rune) bool {
-						return r == ' ' || r == ',' || r == '.' || r=='"' || r == ':' || r == '(' ||  r == ')' ||  r == '）' ||  r == '%' ||  r == '!' ||  r == '\''
+						return r == ' ' || r == ',' || r == '.' || r == '"' || r == ':' || r == '(' || r == ')' || r == '）' || r == '%' || r == '!' || r == '\''
 					})
 					for _, t3 := range tmp {
-						if strings.HasPrefix(t3,"T_") {
-							isWrite := strings.Contains(line, "INSERT ") || strings.Contains(line, "UPDATE ") ||strings.Contains(line, "DELETE ")
+						if strings.HasPrefix(t3, "T_") && !viz.IsChineseChar(t3) && !strings.Contains(t3, ";") && !strings.Contains(t3, "、") {
+							isWrite := strings.Contains(line, "INSERT ") || strings.Contains(line, "UPDATE ") || strings.Contains(line, "DELETE ")
 							allP.AddTable(pkg, procedure, t3, isWrite)
 						}
 
@@ -149,14 +149,14 @@ var DbChainCmd *cobra.Command = &cobra.Command{
 
 			codeFile.Close()
 		}
-		pTree,pTables := allP.Print(point)
+		pTree, pTables := allP.Print(point)
 
-		tables := make([]string,0)
+		tables := make([]string, 0)
 		for key, rw := range pTables {
-			tables = append(tables, fmt.Sprintf("%s [%s]", key,rw.ToString()))
+			tables = append(tables, fmt.Sprintf("%s [%s]", key, rw.ToString()))
 		}
 		sort.Slice(tables, func(i, j int) bool {
-			return strings.Compare(tables[i], tables[j] ) < 0
+			return strings.Compare(tables[i], tables[j]) < 0
 		})
 
 		for _, t := range tables {
@@ -173,7 +173,7 @@ var DbChainCmd *cobra.Command = &cobra.Command{
 			if cmd.Flag("mergePackage").Value.String() == "true" {
 				nodes[strings.Split(tmp[0], ".")[0]] = ""
 				nodes[strings.Split(tmp[1], ".")[0]] = ""
-			}else{
+			} else {
 				nodes[tmp[0]] = ""
 				nodes[tmp[1]] = ""
 			}
@@ -188,7 +188,7 @@ var DbChainCmd *cobra.Command = &cobra.Command{
 				if strings.Contains(node, owner) {
 					attrs["color"] = "greenyellow"
 					attrs["style"] = "filled"
-				}else{
+				} else {
 					attrs["color"] = "orange"
 					attrs["style"] = "filled"
 				}
@@ -212,7 +212,7 @@ var DbChainCmd *cobra.Command = &cobra.Command{
 						graph.AddEdge(nodes[pName0], nodes[pName1], true, attrs)
 					}
 				}
-			}else{
+			} else {
 				graph.AddEdge(nodes[tmp[0]], nodes[tmp[1]], true, attrs)
 			}
 		}

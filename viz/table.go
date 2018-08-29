@@ -1,13 +1,13 @@
 package viz
 
 import (
+	"fmt"
 	"sort"
 	"strings"
-	"fmt"
 )
 
 type Table struct {
-	Name string
+	Name  string
 	Count int
 }
 
@@ -15,8 +15,8 @@ type AllTable struct {
 	Tables map[string]*Table
 }
 
-func NewAllTable() *AllTable  {
-	return &AllTable{Tables:make(map[string]*Table)}
+func NewAllTable() *AllTable {
+	return &AllTable{Tables: make(map[string]*Table)}
 }
 
 func (all *AllTable) Add(tableName string) {
@@ -28,16 +28,15 @@ func (all *AllTable) Add(tableName string) {
 }
 
 func (all *AllTable) Print() {
-	tables := make([]*Table,0)
+	tables := make([]*Table, 0)
 	for key := range all.Tables {
-		tables= append(tables, all.Tables[key])
+		tables = append(tables, all.Tables[key])
 	}
 	sort.Slice(tables, func(i, j int) bool {
-		return strings.Compare(tables[i].Name, tables[j].Name ) < 0
+		return strings.Compare(tables[i].Name, tables[j].Name) < 0
 	})
 
 	for _, table := range tables {
 		fmt.Printf("%s : %d\n", table.Name, table.Count)
 	}
 }
-

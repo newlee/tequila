@@ -1,14 +1,13 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
-	"strings"
-	"fmt"
-	"os"
 	"bufio"
+	"fmt"
 	"github.com/awalterschulze/gographviz"
 	. "github.com/newlee/tequila/viz"
-
+	"github.com/spf13/cobra"
+	"os"
+	"strings"
 )
 
 var tableCmd *cobra.Command = &cobra.Command{
@@ -29,8 +28,8 @@ var tableCmd *cobra.Command = &cobra.Command{
 		tables := make(map[string]string, 0)
 		for scanner.Scan() {
 			line := scanner.Text()
-			if strings.Contains(line,"CREATE TABLE ") && strings.Contains(line,"CLAIM") {
-				tmp := strings.Split(line,"\"")
+			if strings.Contains(line, "CREATE TABLE ") && strings.Contains(line, "CLAIM") {
+				tmp := strings.Split(line, "\"")
 				tables[tmp[3]] = ""
 
 			}
@@ -45,14 +44,14 @@ var tableCmd *cobra.Command = &cobra.Command{
 		relations := make([]*Relation, 0)
 		for scanner.Scan() {
 			line := scanner.Text()
-			if strings.Contains(line,"FOREIGN KEY") {
-				tmp := strings.Split(line,"\"")
+			if strings.Contains(line, "FOREIGN KEY") {
+				tmp := strings.Split(line, "\"")
 				table := tmp[3]
 				scanner.Scan()
 				line = scanner.Text()
-				tmp = strings.Split(line,"\"")
+				tmp = strings.Split(line, "\"")
 				rTable := tmp[3]
-				relations = append(relations, &Relation{From:table, To: rTable})
+				relations = append(relations, &Relation{From: table, To: rTable})
 			}
 		}
 
@@ -61,18 +60,18 @@ var tableCmd *cobra.Command = &cobra.Command{
 
 		for t := range tables {
 			attrs := make(map[string]string)
-			if strings.Contains(t,"CLAIM"){
+			if strings.Contains(t, "CLAIM") {
 				graph.AddNode("G", t, attrs)
 			}
 		}
 
 		for _, r := range relations {
 			attrs := make(map[string]string)
-			if strings.Contains(r.From,"CLAIM") || strings.Contains(r.To,"CLAIM") {
-				if !strings.Contains(r.From,"CLAIM") {
+			if strings.Contains(r.From, "CLAIM") || strings.Contains(r.To, "CLAIM") {
+				if !strings.Contains(r.From, "CLAIM") {
 					fmt.Println("from: " + r.From + "  -> " + r.To)
 				}
-				if  !strings.Contains(r.To,"CLAIM") {
+				if !strings.Contains(r.To, "CLAIM") {
 					fmt.Println("to: " + r.From + "  -> " + r.To)
 				}
 				if _, ok := tables[r.From]; !ok {
@@ -88,7 +87,6 @@ var tableCmd *cobra.Command = &cobra.Command{
 
 		}
 
-
 	},
 }
 
@@ -98,4 +96,3 @@ func init() {
 	tableCmd.Flags().StringP("source", "s", "", "source code directory")
 	tableCmd.Flags().StringP("output", "o", "table.dot", "output dot file name")
 }
-
