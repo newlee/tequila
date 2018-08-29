@@ -194,11 +194,7 @@ func (p *Procedure) Print(fullName string) {
 		return
 	}
 	p.BePrint = true
-	//if !strings.Contains(fullName, "PKG_LIFE_CLAIM") {
 	for table, rw := range p.Tables {
-		//if strings.HasPrefix(table, "T_CLAIM") {
-		//	fmt.Println(fullName)
-		//}
 		if rw.W {
 			if _, ok := tables[table]; !ok {
 				tables[table] = ""
@@ -219,7 +215,6 @@ func (p *Procedure) Print(fullName string) {
 		}
 
 	}
-	//}
 
 	for key, procedure := range p.CallProcedures {
 		if key != fullName {
