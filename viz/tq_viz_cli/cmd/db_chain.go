@@ -13,6 +13,132 @@ import (
 	"strings"
 )
 
+func parseAllPkg(codeFiles []string)  *viz.AllProcedure{
+	allP := viz.NewAllProcedure()
+
+	for _, codeFileName := range codeFiles {
+		codeFile, _ := os.Open(codeFileName)
+		scanner := bufio.NewScanner(codeFile)
+		scanner.Split(bufio.ScanLines)
+
+		pkg := ""
+		for scanner.Scan() {
+			line := scanner.Text()
+			line = strings.ToUpper(line)
+
+			if strings.Contains(line, "PKG_") && strings.Contains(line, "CREATE") {
+				tmp := strings.FieldsFunc(line, func(r rune) bool {
+					return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"'
+				})
+
+				for _, key := range tmp {
+					if strings.HasPrefix(key, "PKG_") {
+						pkg = key
+					}
+				}
+			}
+
+			if strings.Contains(line, "PROCEDURE") && strings.Contains(line, "P_") {
+				tmp := strings.FieldsFunc(line, func(r rune) bool {
+					return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"'
+				})
+
+				for _, key := range tmp {
+					if strings.HasPrefix(key, "P_") {
+						allP.Add(pkg, key)
+					}
+				}
+			}
+		}
+
+		codeFile.Close()
+	}
+
+	for _, codeFileName := range codeFiles {
+		codeFile, _ := os.Open(codeFileName)
+		scanner := bufio.NewScanner(codeFile)
+		scanner.Split(bufio.ScanLines)
+
+		pkg := ""
+		procedure := ""
+		for scanner.Scan() {
+			line := scanner.Text()
+			line = strings.ToUpper(line)
+
+			if strings.Contains(line, "PKG_") && strings.Contains(line, "CREATE") {
+				tmp := strings.FieldsFunc(line, func(r rune) bool {
+					return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"'
+				})
+
+				for _, key := range tmp {
+					if strings.HasPrefix(key, "PKG_") {
+						pkg = key
+					}
+				}
+			}
+
+			if strings.Contains(line, "PROCEDURE") && strings.Contains(line, "P_") {
+				tmp := strings.FieldsFunc(line, func(r rune) bool {
+					return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"'
+				})
+
+				for _, key := range tmp {
+					if strings.HasPrefix(key, "P_") {
+						procedure = key
+					}
+				}
+			}
+
+			if strings.Contains(line, "PKG_") && strings.Contains(line, "(") {
+				tmp := strings.FieldsFunc(line, func(r rune) bool {
+					return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"' || r == ')'
+				})
+
+				for _, key := range tmp {
+					if strings.HasPrefix(key, "PKG_") {
+						sk := strings.Replace(key, "\"", "", -1)
+						spss := strings.Split(sk, ".")
+						if len(spss) > 1 && strings.Contains(pkg, "PKG_") {
+							sp := spss[1]
+							if strings.HasPrefix(sp, "P_") {
+								allP.AddCall(pkg, procedure, spss[0], spss[1])
+							}
+
+						}
+					}
+				}
+			}
+
+			if strings.Contains(line, "P_") && strings.Contains(line, "(") {
+				tmp := strings.FieldsFunc(line, func(r rune) bool {
+					return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"' || r == ')'
+				})
+
+				for _, key := range tmp {
+					if strings.HasPrefix(key, "P_") {
+						allP.AddCall(pkg, procedure, pkg, key)
+					}
+				}
+			}
+
+			if strings.Contains(line, " T_") || strings.Contains(line, ",T_") {
+				tmp := strings.FieldsFunc(line, func(r rune) bool {
+					return r == ' ' || r == ',' || r == '.' || r == '"' || r == ':' || r == '(' || r == ')' || r == '）' || r == '%' || r == '!' || r == '\''
+				})
+				for _, t3 := range tmp {
+					if strings.HasPrefix(t3, "T_") && !viz.IsChineseChar(t3) && !strings.Contains(t3, ";") && !strings.Contains(t3, "、") {
+						isWrite := strings.Contains(line, "INSERT ") || strings.Contains(line, "UPDATE ") || strings.Contains(line, "DELETE ")
+						allP.AddTable(pkg, procedure, t3, isWrite)
+					}
+
+				}
+			}
+		}
+
+		codeFile.Close()
+	}
+	return allP
+}
 var DbChainCmd *cobra.Command = &cobra.Command{
 	Use:   "dc",
 	Short: "database call chain grpah",
@@ -26,129 +152,8 @@ var DbChainCmd *cobra.Command = &cobra.Command{
 			return nil
 		})
 
-		allP := viz.NewAllProcedure()
+		allP := parseAllPkg(codeFiles)
 
-		for _, codeFileName := range codeFiles {
-			codeFile, _ := os.Open(codeFileName)
-			scanner := bufio.NewScanner(codeFile)
-			scanner.Split(bufio.ScanLines)
-
-			pkg := ""
-			for scanner.Scan() {
-				line := scanner.Text()
-				line = strings.ToUpper(line)
-
-				if strings.Contains(line, "PKG_") && strings.Contains(line, "CREATE") {
-					tmp := strings.FieldsFunc(line, func(r rune) bool {
-						return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"'
-					})
-
-					for _, key := range tmp {
-						if strings.HasPrefix(key, "PKG_") {
-							pkg = key
-						}
-					}
-				}
-
-				if strings.Contains(line, "PROCEDURE") && strings.Contains(line, "P_") {
-					tmp := strings.FieldsFunc(line, func(r rune) bool {
-						return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"'
-					})
-
-					for _, key := range tmp {
-						if strings.HasPrefix(key, "P_") {
-							allP.Add(pkg, key)
-						}
-					}
-				}
-			}
-
-			codeFile.Close()
-		}
-
-		for _, codeFileName := range codeFiles {
-			codeFile, _ := os.Open(codeFileName)
-			scanner := bufio.NewScanner(codeFile)
-			scanner.Split(bufio.ScanLines)
-
-			pkg := ""
-			procedure := ""
-			for scanner.Scan() {
-				line := scanner.Text()
-				line = strings.ToUpper(line)
-
-				if strings.Contains(line, "PKG_") && strings.Contains(line, "CREATE") {
-					tmp := strings.FieldsFunc(line, func(r rune) bool {
-						return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"'
-					})
-
-					for _, key := range tmp {
-						if strings.HasPrefix(key, "PKG_") {
-							pkg = key
-						}
-					}
-				}
-
-				if strings.Contains(line, "PROCEDURE") && strings.Contains(line, "P_") {
-					tmp := strings.FieldsFunc(line, func(r rune) bool {
-						return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"'
-					})
-
-					for _, key := range tmp {
-						if strings.HasPrefix(key, "P_") {
-							procedure = key
-						}
-					}
-				}
-
-				if strings.Contains(line, "PKG_") && strings.Contains(line, "(") {
-					tmp := strings.FieldsFunc(line, func(r rune) bool {
-						return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"' || r == ')'
-					})
-
-					for _, key := range tmp {
-						if strings.HasPrefix(key, "PKG_") {
-							sk := strings.Replace(key, "\"", "", -1)
-							spss := strings.Split(sk, ".")
-							if len(spss) > 1 && strings.Contains(pkg, "PKG_") {
-								sp := spss[1]
-								if strings.HasPrefix(sp, "P_") {
-									allP.AddCall(pkg, procedure, spss[0], spss[1])
-								}
-
-							}
-						}
-					}
-				}
-
-				if strings.Contains(line, "P_") && strings.Contains(line, "(") {
-					tmp := strings.FieldsFunc(line, func(r rune) bool {
-						return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"' || r == ')'
-					})
-
-					for _, key := range tmp {
-						if strings.HasPrefix(key, "P_") {
-							allP.AddCall(pkg, procedure, pkg, key)
-						}
-					}
-				}
-
-				if strings.Contains(line, " T_") || strings.Contains(line, ",T_") {
-					tmp := strings.FieldsFunc(line, func(r rune) bool {
-						return r == ' ' || r == ',' || r == '.' || r == '"' || r == ':' || r == '(' || r == ')' || r == '）' || r == '%' || r == '!' || r == '\''
-					})
-					for _, t3 := range tmp {
-						if strings.HasPrefix(t3, "T_") && !viz.IsChineseChar(t3) && !strings.Contains(t3, ";") && !strings.Contains(t3, "、") {
-							isWrite := strings.Contains(line, "INSERT ") || strings.Contains(line, "UPDATE ") || strings.Contains(line, "DELETE ")
-							allP.AddTable(pkg, procedure, t3, isWrite)
-						}
-
-					}
-				}
-			}
-
-			codeFile.Close()
-		}
 		pTree, pTables := allP.Print(point)
 
 		tables := make([]string, 0)

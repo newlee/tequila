@@ -96,7 +96,11 @@ func (all *AllProcedure) Add(pkgName, procedure string) {
 	}
 
 	if _, ok := all.Procedures[fullName]; !ok {
-		all.Procedures[fullName] = &Procedure{Name: procedure, FullName: fullName, CallProcedures: make(map[string]*Procedure), Tables: make(map[string]*RW)}
+		all.Procedures[fullName] = &Procedure{
+			Name:           procedure,
+			FullName:       fullName,
+			CallProcedures: make(map[string]*Procedure),
+			Tables:         make(map[string]*RW)}
 	}
 }
 

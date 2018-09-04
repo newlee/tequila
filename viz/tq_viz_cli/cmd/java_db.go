@@ -75,7 +75,14 @@ var javaDbCmd *cobra.Command = &cobra.Command{
 			for scanner.Scan() {
 				line := scanner.Text()
 				line = strings.ToUpper(line)
-
+				fields := strings.Fields(line)
+				if len(fields) == 0 {
+					continue
+				}
+				first := fields[0]
+				if strings.HasPrefix(first, "/*") || strings.HasPrefix(first, "*") || strings.HasPrefix(first, "//") {
+					continue
+				}
 				if strings.Contains(line, "PKG_") {
 					tmp := strings.FieldsFunc(line, func(r rune) bool {
 						return r == ' ' || r == '(' || r == ',' || r == '\''
