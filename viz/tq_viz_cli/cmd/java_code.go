@@ -11,7 +11,7 @@ import (
 
 var javaCodeCmd *cobra.Command = &cobra.Command{
 	Use:   "jc",
-	Short: "icall grpah",
+	Short: "java code package dependencies",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		source := cmd.Flag("source").Value.String()

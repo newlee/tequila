@@ -15,7 +15,7 @@ import (
 
 var DbChainCmd *cobra.Command = &cobra.Command{
 	Use:   "dc",
-	Short: "icall grpah",
+	Short: "database call chain grpah",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		source := cmd.Flag("source").Value.String()

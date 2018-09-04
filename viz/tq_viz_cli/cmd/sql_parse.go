@@ -3,14 +3,14 @@ package cmd
 import (
 	//"fmt"
 
-	"github.com/spf13/cobra"
-	"fmt"
-	"path/filepath"
-	"os"
-	"strings"
 	"bufio"
+	"fmt"
+	"github.com/spf13/cobra"
 	"github.com/xwb1989/sqlparser"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/newlee/tequila/viz"
 	"reflect"
@@ -26,11 +26,11 @@ func printJoin(table sqlparser.TableExpr) {
 		printJoin(table.LeftExpr)
 	case *sqlparser.AliasedTableExpr:
 		tName := sqlparser.String(table.Expr)
-		if strings.HasPrefix(tName,"ODSUSER.T_") {
+		if strings.HasPrefix(tName, "ODSUSER.T_") {
 			currentQuery.AddTable(tName, table.As.String())
 		}
 
-		if strings.HasPrefix(tName,"(select") {
+		if strings.HasPrefix(tName, "(select") {
 			//fmt.Println("----------"+ table.As.String())
 			//fmt.Println("----------"+ tName)
 		}
@@ -74,11 +74,12 @@ func printWhen(when sqlparser.Expr) {
 		fmt.Println(reflect.TypeOf(when).String() + sqlparser.String(when))
 	}
 }
+
 var queryArr = make([]*viz.Query, 0)
 
 var sqlParseCmd *cobra.Command = &cobra.Command{
 	Use:   "sp",
-	Short: "sql parse",
+	Short: "query sql parse",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		source := cmd.Flag("source").Value.String()
@@ -91,7 +92,7 @@ var sqlParseCmd *cobra.Command = &cobra.Command{
 			return nil
 		})
 
-		querys := make([]string,0)
+		querys := make([]string, 0)
 		for _, codeFileName := range codeFiles {
 			codeFile, _ := os.Open(codeFileName)
 			scanner := bufio.NewScanner(codeFile)
@@ -105,54 +106,54 @@ var sqlParseCmd *cobra.Command = &cobra.Command{
 				tmp := strings.Fields(strings.ToUpper(line))
 				for _, word := range tmp {
 
-					if word == "UPDATE"  {
+					if word == "UPDATE" {
 						begin = true
 					}
-					if !begin && strings.HasSuffix(word , "SELECT") {
+					if !begin && strings.HasSuffix(word, "SELECT") {
 						begin = true
 					}
 
-					if word != ""  {
+					if word != "" {
 						break
 					}
 				}
 
-				if begin  {
+				if begin {
 					if strings.Contains(line, "--") && !strings.Contains(line, "/") {
 						tmp := strings.Split(line, "--")
 						line = tmp[0]
 					}
-					if strings.Contains(line,"F_QHH(") && strings.Contains(line, "SUBSTR") {
+					if strings.Contains(line, "F_QHH(") && strings.Contains(line, "SUBSTR") {
 						re, _ := regexp.Compile("F_QHH\\(([\\S\\s]+?)\\)")
 						submatch := re.FindStringSubmatch(line)
 
 						line = strings.Replace(line, submatch[0], submatch[1], -1)
 					}
 
-					if strings.Contains(line,"TRIM(") && strings.Contains(line, "SUBSTR") {
+					if strings.Contains(line, "TRIM(") && strings.Contains(line, "SUBSTR") {
 						re, _ := regexp.Compile("TRIM\\(([\\S\\s]+?)\\)")
 						submatch := re.FindStringSubmatch(line)
 
 						line = strings.Replace(line, submatch[0], submatch[1], -1)
 					}
 
-					if strings.Contains(line,"ROW_NUMBER()") {
+					if strings.Contains(line, "ROW_NUMBER()") {
 						line = "0"
 					}
 
-					if strings.Contains(strings.ToUpper(line),"(PARTITION BY") {
+					if strings.Contains(strings.ToUpper(line), "(PARTITION BY") {
 						line = "mm"
 					}
 
-					if strings.Contains(line,"LENGTHB(") {
+					if strings.Contains(line, "LENGTHB(") {
 						line = strings.Replace(line, "LENGTHB(", "LENGTH(", -1)
 					}
 
-					if strings.Contains(strings.ToUpper(line)," DATE") && !strings.Contains(line,"SELECT") {
+					if strings.Contains(strings.ToUpper(line), " DATE") && !strings.Contains(line, "SELECT") {
 						line = strings.Replace(strings.ToUpper(line), " DATE", "", -1)
 					}
 
-					if strings.HasPrefix(line , "/*") {
+					if strings.HasPrefix(line, "/*") {
 						continue
 					}
 
@@ -165,7 +166,6 @@ var sqlParseCmd *cobra.Command = &cobra.Command{
 				}
 			}
 		}
-
 
 		for _, query := range querys {
 			parseQuery(query)
@@ -185,13 +185,11 @@ func parseQuery(query string) {
 	sql = strings.Replace(sql, ";", "", -1)
 	sql = strings.Replace(sql, "INTO", "", -1)
 
-
-
 	stmt, err := sqlparser.Parse(sql)
 	if err != nil {
 		//fmt.Println(sql)
 		//fmt.Println("parse error: " + err.Error())
-		return;
+		return
 	}
 	switch stmt := stmt.(type) {
 	case *sqlparser.Select:

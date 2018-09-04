@@ -85,7 +85,7 @@ func processFile(srcFile string) {
 
 var tarCmd *cobra.Command = &cobra.Command{
 	Use:   "tar",
-	Short: "icall grpah",
+	Short: "full collaboration graph from tar file",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		source := cmd.Flag("source").Value.String()

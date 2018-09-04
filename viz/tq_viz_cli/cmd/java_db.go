@@ -12,7 +12,7 @@ import (
 
 var javaDbCmd *cobra.Command = &cobra.Command{
 	Use:   "jd",
-	Short: "icall grpah",
+	Short: "java code to database dependencies",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		source := cmd.Flag("source").Value.String()
