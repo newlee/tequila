@@ -31,7 +31,7 @@ var javaDbCmd *cobra.Command = &cobra.Command{
 				codeFiles = append(codeFiles, path)
 			} else {
 				for _, key := range split {
-					if strings.Contains(strings.ToUpper(path), key) {
+					if strings.Contains(path, key) {
 						return nil
 					}
 				}
