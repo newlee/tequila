@@ -12,6 +12,7 @@ import (
 
 	"github.com/newlee/tequila/viz"
 	"regexp"
+	"reflect"
 )
 
 
@@ -21,6 +22,7 @@ func printJoin(table sqlparser.TableExpr, currentQuery *viz.Query) {
 	case *sqlparser.JoinTableExpr:
 		printJoin(table.RightExpr, currentQuery)
 		printJoin(table.LeftExpr, currentQuery)
+		printWhen(table.Condition.On,currentQuery)
 	case *sqlparser.AliasedTableExpr:
 		tName := sqlparser.String(table.Expr)
 		if strings.HasPrefix(tName, "ODSUSER.T_") {
@@ -77,8 +79,24 @@ func printWhen(when sqlparser.Expr, currentQuery *viz.Query) {
 		if tname != "" {
 			currentQuery.AddColumn(fmt.Sprintf("%s.%s", tname, col))
 		}
+	case *sqlparser.SubstrExpr:
+		tname := when.Name.Qualifier.Name.String()
+		col := when.Name.Name.String()
+		if tname != "" {
+			currentQuery.AddColumn(fmt.Sprintf("%s.%s", tname, col))
+		}
+	case *sqlparser.FuncExpr:
+		tname := when.Qualifier.String()
+		col := when.Name.String()
+		if tname != "" {
+			currentQuery.AddColumn(fmt.Sprintf("%s.%s", tname, col))
+		}
+	case *sqlparser.SQLVal:
+	case *sqlparser.BinaryExpr:
+	case sqlparser.ValTuple:
+
 	default:
-		//fmt.Println(reflect.TypeOf(when).String() + sqlparser.String(when))
+		fmt.Println(reflect.TypeOf(when).String() + " --- " + sqlparser.String(when))
 	}
 }
 
