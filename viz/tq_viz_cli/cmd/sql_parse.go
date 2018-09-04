@@ -11,17 +11,16 @@ import (
 	"strings"
 
 	"github.com/newlee/tequila/viz"
-	"reflect"
 	"regexp"
 )
 
-var currentQuery *viz.Query
 
-func printJoin(table sqlparser.TableExpr) {
+
+func printJoin(table sqlparser.TableExpr, currentQuery *viz.Query) {
 	switch table := table.(type) {
 	case *sqlparser.JoinTableExpr:
-		printJoin(table.RightExpr)
-		printJoin(table.LeftExpr)
+		printJoin(table.RightExpr, currentQuery)
+		printJoin(table.LeftExpr, currentQuery)
 	case *sqlparser.AliasedTableExpr:
 		tName := sqlparser.String(table.Expr)
 		if strings.HasPrefix(tName, "ODSUSER.T_") {
@@ -36,7 +35,7 @@ func printJoin(table sqlparser.TableExpr) {
 		fmt.Println("----------------")
 	}
 }
-func printWhen(when sqlparser.Expr) {
+func printWhen(when sqlparser.Expr, currentQuery *viz.Query) {
 	switch when := when.(type) {
 	case *sqlparser.ComparisonExpr:
 		left := sqlparser.String(when.Left)
@@ -51,25 +50,35 @@ func printWhen(when sqlparser.Expr) {
 		switch l := when.Left.(type) {
 		case *sqlparser.Subquery:
 			parseQuery(sqlparser.String(l.Select))
+		default:
+			printWhen(l, currentQuery)
 		}
 		switch l := when.Right.(type) {
 		case *sqlparser.Subquery:
 			parseQuery(sqlparser.String(l.Select))
+		default:
+			printWhen(l, currentQuery)
 		}
 	case *sqlparser.OrExpr:
-		printWhen(when.Left)
-		printWhen(when.Right)
+		printWhen(when.Left, currentQuery)
+		printWhen(when.Right, currentQuery)
 	case *sqlparser.ExistsExpr:
 		parseQuery(sqlparser.String(when.Subquery.Select))
 	case *sqlparser.IsExpr:
 		currentQuery.AddColumn(sqlparser.String(when.Expr))
 	case *sqlparser.ParenExpr:
-		printWhen(when.Expr)
+		printWhen(when.Expr, currentQuery)
 	case *sqlparser.AndExpr:
-		printWhen(when.Left)
-		printWhen(when.Right)
+		printWhen(when.Left, currentQuery)
+		printWhen(when.Right, currentQuery)
+	case *sqlparser.ColName:
+		tname := when.Qualifier.Name.String()
+		col := when.Name.String()
+		if tname != "" {
+			currentQuery.AddColumn(fmt.Sprintf("%s.%s", tname, col))
+		}
 	default:
-		fmt.Println(reflect.TypeOf(when).String() + sqlparser.String(when))
+		//fmt.Println(reflect.TypeOf(when).String() + sqlparser.String(when))
 	}
 }
 
@@ -191,10 +200,10 @@ func parseQuery(query string) {
 	}
 	switch stmt := stmt.(type) {
 	case *sqlparser.Select:
-		currentQuery = viz.NewQuery(query)
+		var currentQuery = viz.NewQuery(query)
 
 		for _, node := range stmt.From {
-			printJoin(node)
+			printJoin(node, currentQuery)
 		}
 		for _, node := range stmt.SelectExprs {
 			switch node := node.(type) {
@@ -202,7 +211,7 @@ func parseQuery(query string) {
 				switch expr := node.Expr.(type) {
 				case *sqlparser.CaseExpr:
 					for _, when := range expr.Whens {
-						printWhen(when.Cond)
+						printWhen(when.Cond, currentQuery)
 					}
 				default:
 					column := sqlparser.String(expr)
@@ -221,12 +230,12 @@ func parseQuery(query string) {
 
 		}
 		if stmt.Where != nil {
-			printWhen(stmt.Where.Expr)
+			printWhen(stmt.Where.Expr, currentQuery)
 		}
 		queryArr = append(queryArr, currentQuery)
 	case *sqlparser.Update:
 
-		currentQuery = viz.NewQuery(query)
+		var currentQuery = viz.NewQuery(query)
 		for _, node := range stmt.Exprs {
 			switch node := node.Expr.(type) {
 			case *sqlparser.Subquery:
@@ -234,9 +243,10 @@ func parseQuery(query string) {
 			default:
 			}
 		}
-		printWhen(stmt.Where.Expr)
+		printWhen(stmt.Where.Expr,currentQuery)
 	case *sqlparser.Delete:
-		printWhen(stmt.Where.Expr)
+		var currentQuery = viz.NewQuery(query)
+		printWhen(stmt.Where.Expr, currentQuery)
 	case *sqlparser.Insert:
 	}
 }
