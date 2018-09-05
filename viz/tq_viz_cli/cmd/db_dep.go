@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"github.com/newlee/tequila/viz"
+	"sort"
 )
 
 var dbDepCmd *cobra.Command = &cobra.Command{
@@ -35,24 +37,32 @@ var dbDepCmd *cobra.Command = &cobra.Command{
 				return strings.HasPrefix(name, filter)
 			}
 		}
-
+		ps := make([]*viz.Procedure, 0)
 		for name, p := range allP.Procedures {
 			if match(name) {
-				cs := make([]string, 0)
-				for cname := range p.CallProcedures {
-					if !match(cname) {
-						cs = append(cs, cname)
-					}
-				}
-				if len(cs) > 0 {
-					fmt.Println(name)
-					for _, cname := range cs {
-						fmt.Printf("  %s\n", cname)
-					}
-				}
+				ps = append(ps, p)
 
 			}
 		}
+		sort.Slice(ps, func(i, j int) bool {
+			return strings.Compare(ps[i].Name, ps[j].Name) < 0
+		})
+
+		for _, p := range ps {
+			cs := make([]string, 0)
+			for cname := range p.CallProcedures {
+				if !match(cname) {
+					cs = append(cs, cname)
+				}
+			}
+			if len(cs) > 0 {
+				fmt.Println(p.FullName)
+				for _, cname := range cs {
+					fmt.Printf("  %s\n", cname)
+				}
+			}
+		}
+
 	},
 }
 

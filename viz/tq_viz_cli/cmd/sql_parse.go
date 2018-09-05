@@ -11,27 +11,25 @@ import (
 	"strings"
 
 	"github.com/newlee/tequila/viz"
-	"regexp"
 	"reflect"
+	"regexp"
 )
-
-
 
 func printJoin(table sqlparser.TableExpr, currentQuery *viz.Query) {
 	switch table := table.(type) {
 	case *sqlparser.JoinTableExpr:
 		printJoin(table.RightExpr, currentQuery)
 		printJoin(table.LeftExpr, currentQuery)
-		printWhen(table.Condition.On,currentQuery)
+		printWhen(table.Condition.On, currentQuery)
 	case *sqlparser.AliasedTableExpr:
 		tName := sqlparser.String(table.Expr)
 		if strings.HasPrefix(tName, "ODSUSER.T_") {
 			currentQuery.AddTable(tName, table.As.String())
 		}
 
-		if strings.HasPrefix(tName, "(select") {
-			//fmt.Println("----------"+ table.As.String())
-			//fmt.Println("----------"+ tName)
+		if strings.HasPrefix(tName, "(select") && strings.Contains(tName, "ODSUSER.") {
+			tName = strings.Trim(tName, " \n")
+			parseQuery(tName[1 : len(tName)-1])
 		}
 	default:
 		fmt.Println("----------------")
@@ -94,6 +92,7 @@ func printWhen(when sqlparser.Expr, currentQuery *viz.Query) {
 	case *sqlparser.SQLVal:
 	case *sqlparser.BinaryExpr:
 	case sqlparser.ValTuple:
+	case *sqlparser.UnaryExpr:
 
 	default:
 		fmt.Println(reflect.TypeOf(when).String() + " --- " + sqlparser.String(when))
@@ -166,10 +165,6 @@ var sqlParseCmd *cobra.Command = &cobra.Command{
 						line = "0"
 					}
 
-					if strings.Contains(strings.ToUpper(line), "(PARTITION BY") {
-						line = "mm"
-					}
-
 					if strings.Contains(line, "LENGTHB(") {
 						line = strings.Replace(line, "LENGTHB(", "LENGTH(", -1)
 					}
@@ -193,6 +188,10 @@ var sqlParseCmd *cobra.Command = &cobra.Command{
 		}
 
 		for _, query := range querys {
+			query = strings.Trim(query, " ")
+			if strings.HasPrefix(query, "(") {
+				query = query[1 : len(query)-3]
+			}
 			parseQuery(query)
 		}
 		fq := &viz.Query{Sql: "", Tables: make(map[string]*viz.QueryTable)}
@@ -203,8 +202,15 @@ var sqlParseCmd *cobra.Command = &cobra.Command{
 
 	},
 }
+var isRetry = false
 
 func parseQuery(query string) {
+	if !strings.Contains(strings.ToUpper(query), "ODSUSER.") {
+		return
+	}
+	if strings.HasSuffix(query, "*/\n") {
+		return
+	}
 	sql := strings.ToUpper(query)
 	sql = strings.Replace(query, "(+)", "", -1)
 	sql = strings.Replace(sql, ";", "", -1)
@@ -212,8 +218,15 @@ func parseQuery(query string) {
 
 	stmt, err := sqlparser.Parse(sql)
 	if err != nil {
-		//fmt.Println(sql)
-		//fmt.Println("parse error: " + err.Error())
+		if !isRetry {
+			isRetry = true
+			parseQuery(query + " AS T")
+			isRetry = false
+		}
+		//if isRetry {
+		//	fmt.Println(sql)
+		//	fmt.Println("parse error: " + err.Error())
+		//}
 		return
 	}
 	switch stmt := stmt.(type) {
@@ -261,7 +274,7 @@ func parseQuery(query string) {
 			default:
 			}
 		}
-		printWhen(stmt.Where.Expr,currentQuery)
+		printWhen(stmt.Where.Expr, currentQuery)
 	case *sqlparser.Delete:
 		var currentQuery = viz.NewQuery(query)
 		printWhen(stmt.Where.Expr, currentQuery)

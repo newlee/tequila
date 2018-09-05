@@ -100,7 +100,6 @@ func (query *Query) Merge(other *Query) {
 }
 
 func (query *Query) ToString() {
-	fmt.Println("-------------")
 	for key, qt := range query.Tables {
 		fmt.Println(key)
 		columns := make([]string, 0)

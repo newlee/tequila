@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-func parseAllPkg(codeFiles []string)  *viz.AllProcedure{
+func parseAllPkg(codeFiles []string) *viz.AllProcedure {
 	allP := viz.NewAllProcedure()
 
 	for _, codeFileName := range codeFiles {
@@ -61,10 +61,22 @@ func parseAllPkg(codeFiles []string)  *viz.AllProcedure{
 
 		pkg := ""
 		procedure := ""
+		isComments := false
+
 		for scanner.Scan() {
 			line := scanner.Text()
 			line = strings.ToUpper(line)
+			line = strings.Trim(line, " ")
+			if strings.HasPrefix(line, "/*") {
+				isComments = true
+			}
 
+			if strings.HasSuffix(line, "*/") || strings.HasSuffix(line, "*/;") {
+				isComments = false
+			}
+			if isComments {
+				continue
+			}
 			if strings.Contains(line, "PKG_") && strings.Contains(line, "CREATE") {
 				tmp := strings.FieldsFunc(line, func(r rune) bool {
 					return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"'
@@ -87,6 +99,10 @@ func parseAllPkg(codeFiles []string)  *viz.AllProcedure{
 						procedure = key
 					}
 				}
+			}
+
+			if strings.HasPrefix(line, "--") {
+				continue
 			}
 
 			if strings.Contains(line, "PKG_") && strings.Contains(line, "(") {
@@ -139,6 +155,7 @@ func parseAllPkg(codeFiles []string)  *viz.AllProcedure{
 	}
 	return allP
 }
+
 var DbChainCmd *cobra.Command = &cobra.Command{
 	Use:   "dc",
 	Short: "database call chain grpah",
