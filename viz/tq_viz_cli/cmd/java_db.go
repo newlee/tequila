@@ -10,34 +10,63 @@ import (
 	"strings"
 )
 
+var pkgFilter func(line string) bool
+var tableFilter func(line string) bool
+var javaFilter func(line string) bool
+
 var javaDbCmd *cobra.Command = &cobra.Command{
 	Use:   "jd",
 	Short: "java code to database dependencies",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		source := cmd.Flag("source").Value.String()
-		filter := cmd.Flag("filter").Value.String()
-		pkgKey := cmd.Flag("package").Value.String()
-		tableKey := cmd.Flag("table").Value.String()
 
+		source := cmd.Flag("source").Value.String()
+		filterFile := cmd.Flag("filter").Value.String()
+		pkgFilterFile := cmd.Flag("package").Value.String()
+		tableFilterFile := cmd.Flag("table").Value.String()
+		pkgRegs := readFilterFile(pkgFilterFile)
+		tableRegs := readFilterFile(tableFilterFile)
+		javaRegs := readFilterFile(filterFile)
+		javaMatchRegs := make([]string, 0)
+		blackRegs := make([]string, 0)
+
+		for _, reg := range javaRegs {
+			if strings.HasPrefix(reg, "- ") {
+				blackRegs = append(blackRegs, reg[2:])
+			}else {
+				javaMatchRegs = append(javaMatchRegs, reg)
+			}
+		}
+		if cmd.Flag("reverse").Value.String() == "false" {
+			pkgFilter = func(line string) bool {
+				return unMatchByRegexps(line, pkgRegs)
+			}
+			tableFilter = func(line string) bool {
+				return unMatchByRegexps(line, tableRegs)
+			}
+			javaFilter = func(line string) bool {
+				return matchByRegexps(line, javaMatchRegs) && !matchByRegexps(line, blackRegs)
+			}
+		} else {
+			pkgFilter = func(line string) bool {
+				return matchByRegexps(line, pkgRegs)
+			}
+			tableFilter = func(line string) bool {
+				return matchByRegexps(line, tableRegs)
+			}
+
+			javaFilter = func(line string) bool {
+				return unMatchByRegexps(line, javaMatchRegs)
+			}
+		}
 		codeFiles := make([]string, 0)
 		filepath.Walk(source, func(path string, fi os.FileInfo, err error) error {
 			if !strings.HasSuffix(path, ".java") {
 				return nil
 			}
-
-			split := strings.Split(filter, ",")
-			if filter == "" {
-				codeFiles = append(codeFiles, path)
-			} else {
-				for _, key := range split {
-					if strings.Contains(path, key) {
-						return nil
-					}
-				}
+			if javaFilter(path) {
 				codeFiles = append(codeFiles, path)
 			}
-
 			return nil
 		})
 
@@ -46,27 +75,6 @@ var javaDbCmd *cobra.Command = &cobra.Command{
 		pkgCallerFiles := make(map[string]string)
 		tableCallerFiles := make(map[string]string)
 
-		var pkgFilter func(line string) bool
-		if filter == "" {
-			pkgFilter = func(line string) bool {
-				return !strings.HasPrefix(line, pkgKey)
-			}
-		} else {
-			pkgFilter = func(line string) bool {
-				return strings.HasPrefix(line, pkgKey)
-			}
-		}
-
-		var tableFilter func(line string) bool
-		if filter == "" {
-			tableFilter = func(line string) bool {
-				return !strings.HasPrefix(line, tableKey)
-			}
-		} else {
-			tableFilter = func(line string) bool {
-				return strings.HasPrefix(line, tableKey)
-			}
-		}
 		for _, codeFileName := range codeFiles {
 			codeFile, _ := os.Open(codeFileName)
 			scanner := bufio.NewScanner(codeFile)
@@ -89,7 +97,7 @@ var javaDbCmd *cobra.Command = &cobra.Command{
 					})
 
 					for _, key := range tmp {
-						if strings.HasPrefix(key, "PKG_") && pkgFilter(key) {
+						if strings.HasPrefix(key, "PKG_") && pkgFilter(strings.Split(key, ".")[0]) {
 							sk := strings.Replace(key, "\"", "", -1)
 							spss := strings.Split(sk, ".")
 							pkg := spss[0]
@@ -112,8 +120,9 @@ var javaDbCmd *cobra.Command = &cobra.Command{
 					})
 					for _, t3 := range tmp {
 						if strings.HasPrefix(t3, "T_") && tableFilter(t3) && !viz.IsChineseChar(t3) {
-							split := strings.Split(codeFileName, "/")
-							tableCallerFiles[split[len(split)-1]] = ""
+							//split := strings.Split(codeFileName, "/")
+							//tableCallerFiles[split[len(split)-1]] = ""
+							tableCallerFiles[codeFileName] = ""
 							tables.Add(t3)
 						}
 					}
@@ -148,8 +157,8 @@ func init() {
 	rootCmd.AddCommand(javaDbCmd)
 
 	javaDbCmd.Flags().StringP("source", "s", "", "source code directory")
-	javaDbCmd.Flags().StringP("filter", "f", "", "file filter")
-	javaDbCmd.Flags().StringP("table", "t", "T_", "table filter")
-	javaDbCmd.Flags().StringP("package", "p", "PKG_", "package filter")
-	javaDbCmd.Flags().StringP("output", "o", "java_db.dot", "output dot file name")
+	javaDbCmd.Flags().StringP("filter", "f", "java", "file filter")
+	javaDbCmd.Flags().StringP("table", "t", "table", "table filter file")
+	javaDbCmd.Flags().StringP("package", "p", "pkg", "package filter file")
+	javaDbCmd.Flags().BoolP("reverse", "R", false, "reverse dep")
 }
