@@ -8,7 +8,7 @@ import (
 	"strings"
 	"github.com/newlee/tequila/viz"
 	"sort"
-	"regexp"
+	"github.com/dlclark/regexp2"
 	"bufio"
 )
 
@@ -28,8 +28,8 @@ func readFilterFile(fileName string) []string {
 
 func matchByRegexps(name string, regexps []string) bool  {
 	for _, reg := range regexps {
-		re, _ := regexp.Compile(reg)
-		if re.MatchString(name) {
+		re, _ := regexp2.Compile(reg, 0)
+		if isMatch, _ := re.MatchString(name); isMatch {
 			return true
 		}
 	}
@@ -38,8 +38,8 @@ func matchByRegexps(name string, regexps []string) bool  {
 
 func unMatchByRegexps(name string, regexps []string) bool  {
 	for _, reg := range regexps {
-		re, _ := regexp.Compile(reg)
-		if re.MatchString(name) {
+		re, _ := regexp2.Compile(reg, 0)
+		if isMatch, _ := re.MatchString(name); isMatch {
 			return false
 		}
 	}

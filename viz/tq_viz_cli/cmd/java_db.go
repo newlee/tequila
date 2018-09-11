@@ -28,13 +28,23 @@ var javaDbCmd *cobra.Command = &cobra.Command{
 		tableRegs := readFilterFile(tableFilterFile)
 		javaRegs := readFilterFile(filterFile)
 		javaMatchRegs := make([]string, 0)
-		blackRegs := make([]string, 0)
+		javaBlackRegs := make([]string, 0)
+
+		tableMatchRegs := make([]string, 0)
+		tableBlackRegs := make([]string, 0)
 
 		for _, reg := range javaRegs {
 			if strings.HasPrefix(reg, "- ") {
-				blackRegs = append(blackRegs, reg[2:])
+				javaBlackRegs = append(javaBlackRegs, reg[2:])
 			}else {
 				javaMatchRegs = append(javaMatchRegs, reg)
+			}
+		}
+		for _, reg := range tableRegs {
+			if strings.HasPrefix(reg, "- ") {
+				tableBlackRegs = append(tableBlackRegs, reg[2:])
+			}else {
+				tableMatchRegs = append(tableMatchRegs, reg)
 			}
 		}
 		if cmd.Flag("reverse").Value.String() == "false" {
@@ -42,23 +52,24 @@ var javaDbCmd *cobra.Command = &cobra.Command{
 				return unMatchByRegexps(line, pkgRegs)
 			}
 			tableFilter = func(line string) bool {
-				return unMatchByRegexps(line, tableRegs)
+				return unMatchByRegexps(line, tableRegs) && !matchByRegexps(line, tableBlackRegs)
 			}
 			javaFilter = func(line string) bool {
-				return matchByRegexps(line, javaMatchRegs) && !matchByRegexps(line, blackRegs)
+				return matchByRegexps(line, javaMatchRegs) && !matchByRegexps(line, javaBlackRegs)
 			}
 		} else {
 			pkgFilter = func(line string) bool {
 				return matchByRegexps(line, pkgRegs)
 			}
 			tableFilter = func(line string) bool {
-				return matchByRegexps(line, tableRegs)
+				return matchByRegexps(line, tableRegs) && !matchByRegexps(line, tableBlackRegs)
 			}
 
 			javaFilter = func(line string) bool {
-				return unMatchByRegexps(line, javaMatchRegs)
+				return !(matchByRegexps(line, javaMatchRegs) && !matchByRegexps(line, javaBlackRegs))
 			}
 		}
+
 		codeFiles := make([]string, 0)
 		filepath.Walk(source, func(path string, fi os.FileInfo, err error) error {
 			if !strings.HasSuffix(path, ".java") {
@@ -120,9 +131,9 @@ var javaDbCmd *cobra.Command = &cobra.Command{
 					})
 					for _, t3 := range tmp {
 						if strings.HasPrefix(t3, "T_") && tableFilter(t3) && !viz.IsChineseChar(t3) {
-							//split := strings.Split(codeFileName, "/")
-							//tableCallerFiles[split[len(split)-1]] = ""
-							tableCallerFiles[codeFileName] = ""
+							split := strings.Split(codeFileName, "/")
+							tableCallerFiles[split[len(split)-1]] = ""
+							//tableCallerFiles[codeFileName] = ""
 							tables.Add(t3)
 						}
 					}
