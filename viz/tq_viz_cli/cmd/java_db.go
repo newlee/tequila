@@ -24,8 +24,10 @@ var javaDbCmd *cobra.Command = &cobra.Command{
 		filterFile := cmd.Flag("filter").Value.String()
 		pkgFilterFile := cmd.Flag("package").Value.String()
 		tableFilterFile := cmd.Flag("table").Value.String()
+		commonTableFile := cmd.Flag("commonTable").Value.String()
 		pkgRegs := readFilterFile(pkgFilterFile)
 		tableRegs := readFilterFile(tableFilterFile)
+		commonTables := readFilterFile(commonTableFile)
 		javaRegs := readFilterFile(filterFile)
 		javaMatchRegs := make([]string, 0)
 		javaBlackRegs := make([]string, 0)
@@ -52,6 +54,11 @@ var javaDbCmd *cobra.Command = &cobra.Command{
 				return unMatchByRegexps(line, pkgRegs)
 			}
 			tableFilter = func(line string) bool {
+				for _, ct := range commonTables {
+					if ct == line {
+						return false
+					}
+				}
 				return unMatchByRegexps(line, tableRegs) && !matchByRegexps(line, tableBlackRegs)
 			}
 			javaFilter = func(line string) bool {
@@ -62,6 +69,11 @@ var javaDbCmd *cobra.Command = &cobra.Command{
 				return matchByRegexps(line, pkgRegs)
 			}
 			tableFilter = func(line string) bool {
+				for _, ct := range commonTables {
+					if ct == line {
+						return false
+					}
+				}
 				return matchByRegexps(line, tableRegs) && !matchByRegexps(line, tableBlackRegs)
 			}
 
@@ -132,7 +144,12 @@ var javaDbCmd *cobra.Command = &cobra.Command{
 					for _, t3 := range tmp {
 						if strings.HasPrefix(t3, "T_") && tableFilter(t3) && !viz.IsChineseChar(t3) {
 							split := strings.Split(codeFileName, "/")
-							tableCallerFiles[split[len(split)-1]] = ""
+
+							s := split[len(split)-1]
+							if _, ok := tableCallerFiles[s]; !ok {
+								tableCallerFiles[s] = ""
+							}
+							tableCallerFiles[s] = tableCallerFiles[s] + "," + t3
 							//tableCallerFiles[codeFileName] = ""
 							tables.Add(t3)
 						}
@@ -157,8 +174,8 @@ var javaDbCmd *cobra.Command = &cobra.Command{
 
 		fmt.Println("")
 		fmt.Println("-----------")
-		for key := range tableCallerFiles {
-			fmt.Println(key)
+		for key,value := range tableCallerFiles {
+			fmt.Println(key + " -- " +  value)
 
 		}
 	},
@@ -170,6 +187,7 @@ func init() {
 	javaDbCmd.Flags().StringP("source", "s", "", "source code directory")
 	javaDbCmd.Flags().StringP("filter", "f", "java", "file filter")
 	javaDbCmd.Flags().StringP("table", "t", "table", "table filter file")
+	javaDbCmd.Flags().StringP("commonTable", "c", "table_common", "common table file")
 	javaDbCmd.Flags().StringP("package", "p", "pkg", "package filter file")
 	javaDbCmd.Flags().BoolP("reverse", "R", false, "reverse dep")
 }
