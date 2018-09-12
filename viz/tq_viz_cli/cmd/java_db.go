@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
 	"github.com/newlee/tequila/viz"
 	"github.com/spf13/cobra"
@@ -9,6 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 )
+
+var pkgFilter func(line string) bool
+var tableFilter func(line string) bool
+var javaFilter func(line string) bool
 
 var javaDbCmd *cobra.Command = &cobra.Command{
 	Use:   "jd",
@@ -24,10 +27,6 @@ var javaDbCmd *cobra.Command = &cobra.Command{
 		pf := viz.CreateRegexpFilter(pkgFilterFile)
 		tf := viz.CreateRegexpFilter(tableFilterFile).AddExcludes(commonTableFile)
 		jf := viz.CreateRegexpFilter(filterFile)
-
-		var pkgFilter func(line string) bool
-		var tableFilter func(line string) bool
-		var javaFilter func(line string) bool
 
 		if cmd.Flag("reverse").Value.String() == "false" {
 			pkgFilter = pf.NotMatch
@@ -55,67 +54,34 @@ var javaDbCmd *cobra.Command = &cobra.Command{
 		pkgCallerFiles := make(map[string]string)
 		tableCallerFiles := make(map[string]string)
 
-		for _, codeFileName := range codeFiles {
-			codeFile, _ := os.Open(codeFileName)
-			scanner := bufio.NewScanner(codeFile)
-			scanner.Split(bufio.ScanLines)
-
-			for scanner.Scan() {
-				line := scanner.Text()
-				line = strings.ToUpper(line)
-				fields := strings.Fields(line)
-				if len(fields) == 0 {
-					continue
-				}
-				first := fields[0]
-				if strings.HasPrefix(first, "/*") || strings.HasPrefix(first, "*") || strings.HasPrefix(first, "//") {
-					continue
-				}
-				if strings.Contains(line, "PKG_") {
-					tmp := strings.FieldsFunc(line, func(r rune) bool {
-						return r == ' ' || r == '(' || r == ',' || r == '\''
-					})
-
-					for _, key := range tmp {
-						if strings.HasPrefix(key, "PKG_") && pkgFilter(strings.Split(key, ".")[0]) {
-							sk := strings.Replace(key, "\"", "", -1)
-							spss := strings.Split(sk, ".")
-							pkg := spss[0]
-
-							if len(spss) > 1 && strings.Contains(pkg, "PKG_") {
-								split := strings.Split(codeFileName, "/")
-								pkgCallerFiles[split[len(split)-1]] = ""
-								sp := spss[1]
-								if strings.HasPrefix(sp, "P_") {
-									allPkg.Add(pkg, sp)
-								}
-							}
-						}
-					}
-				}
-
-				if strings.Contains(line, " T_") || strings.Contains(line, ",T_") {
-					tmp := strings.FieldsFunc(line, func(r rune) bool {
-						return r == ' ' || r == ',' || r == '.' || r == '"' || r == ':' || r == '(' || r == ')' || r == '）' || r == '%' || r == '!' || r == '\''
-					})
-					for _, t3 := range tmp {
-						if strings.HasPrefix(t3, "T_") && tableFilter(t3) && !viz.IsChineseChar(t3) {
-							split := strings.Split(codeFileName, "/")
-
-							s := split[len(split)-1]
-							if _, ok := tableCallerFiles[s]; !ok {
-								tableCallerFiles[s] = ""
-							}
-							tableCallerFiles[s] = tableCallerFiles[s] + "," + t3
-							//tableCallerFiles[codeFileName] = ""
-							tables.Add(t3)
-						}
-					}
-				}
+		doFiles(codeFiles, func(line, codeFileName string) {
+			line = strings.ToUpper(line)
+			fields := strings.Fields(line)
+			if len(fields) == 0 || isComment(fields[0]) {
+				return
 			}
 
-			codeFile.Close()
-		}
+			if strings.Contains(line, "PKG_") {
+				doPkgLine(line, pkgFilter, func(pkg string, sp string) {
+					split := strings.Split(codeFileName, "/")
+					pkgCallerFiles[split[len(split)-1]] = ""
+					allPkg.Add(pkg, sp)
+				})
+			}
+
+			if strings.Contains(line, " T_") || strings.Contains(line, ",T_") {
+				doTableLine(line, tableFilter, func(table string) {
+					split := strings.Split(codeFileName, "/")
+					s := split[len(split)-1]
+					if _, ok := tableCallerFiles[s]; !ok {
+						tableCallerFiles[s] = ""
+					}
+					tableCallerFiles[s] = tableCallerFiles[s] + "," + table
+					//tableCallerFiles[codeFileName] = ""
+					tables.Add(table)
+				})
+			}
+		})
 
 		allPkg.Print()
 		fmt.Println("")
