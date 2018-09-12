@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
-	"github.com/dlclark/regexp2"
 	"github.com/newlee/tequila/viz"
 	"github.com/spf13/cobra"
 	"os"
@@ -11,40 +9,6 @@ import (
 	"sort"
 	"strings"
 )
-
-func readFilterFile(fileName string) []string {
-	result := make([]string, 0)
-	f, _ := os.Open(fileName)
-	scanner := bufio.NewScanner(f)
-	scanner.Split(bufio.ScanLines)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if line != "" {
-			result = append(result, strings.Trim(line, " "))
-		}
-	}
-	return result
-}
-
-func matchByRegexps(name string, regexps []string) bool {
-	for _, reg := range regexps {
-		re, _ := regexp2.Compile(reg, 0)
-		if isMatch, _ := re.MatchString(name); isMatch {
-			return true
-		}
-	}
-	return false
-}
-
-func unMatchByRegexps(name string, regexps []string) bool {
-	for _, reg := range regexps {
-		re, _ := regexp2.Compile(reg, 0)
-		if isMatch, _ := re.MatchString(name); isMatch {
-			return false
-		}
-	}
-	return true
-}
 
 var dbDepCmd *cobra.Command = &cobra.Command{
 	Use:   "dd",
@@ -54,18 +18,14 @@ var dbDepCmd *cobra.Command = &cobra.Command{
 		//defer profile.Start().Stop()
 		source := cmd.Flag("source").Value.String()
 		filterFile := cmd.Flag("filter").Value.String()
-		regexps := readFilterFile(filterFile)
+
+		pf := viz.CreateRegexpFilter(filterFile)
 
 		var match func(name string) bool
 		if cmd.Flag("reverse").Value.String() == "true" {
-			match = func(name string) bool {
-				return unMatchByRegexps(name, regexps)
-			}
-
+			match = pf.NotMatch
 		} else {
-			match = func(name string) bool {
-				return matchByRegexps(name, regexps)
-			}
+			match = pf.Match
 		}
 
 		codeFiles := make([]string, 0)

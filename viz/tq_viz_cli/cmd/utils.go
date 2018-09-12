@@ -7,11 +7,12 @@ import (
 	"strings"
 )
 
-func doFiles(fileNames []string, callback func(string, string)) {
+func doFiles(fileNames []string, fileCallback func(), callback func(string, string)) {
 	for _, fileName := range fileNames {
 		file, _ := os.Open(fileName)
 		scanner := bufio.NewScanner(file)
 		scanner.Split(bufio.ScanLines)
+		fileCallback()
 		for scanner.Scan() {
 			line := scanner.Text()
 			callback(line, fileName)
@@ -21,8 +22,12 @@ func doFiles(fileNames []string, callback func(string, string)) {
 	}
 }
 
+var emptyFilter = func(line string) bool {
+	return true
+}
+
 var pkgSplit = func(r rune) bool {
-	return r == ' ' || r == '(' || r == ',' || r == '\''
+	return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"' || r == ')'
 }
 var tableSplit = func(r rune) bool {
 	return r == ' ' || r == ',' || r == '.' || r == '"' || r == ':' || r == '(' || r == ')' || r == '）' || r == '%' || r == '!' || r == '\''
@@ -65,4 +70,21 @@ func doTableLine(line string, tableFilter func(line string) bool, callback func(
 			callback(s)
 		}
 	})
+}
+
+func doCreatePkg(line string, callback func(string)) {
+	tmp := strings.FieldsFunc(line, pkgSplit)
+	for _, key := range tmp {
+		if strings.HasPrefix(key, "PKG_") {
+			callback(key)
+		}
+	}
+}
+func doCreateProcedure(line string, callback func(string)) {
+	tmp := strings.FieldsFunc(line, pkgSplit)
+	for _, key := range tmp {
+		if strings.HasPrefix(key, "P_") {
+			callback(key)
+		}
+	}
 }

@@ -54,7 +54,7 @@ var javaDbCmd *cobra.Command = &cobra.Command{
 		pkgCallerFiles := make(map[string]string)
 		tableCallerFiles := make(map[string]string)
 
-		doFiles(codeFiles, func(line, codeFileName string) {
+		doFiles(codeFiles, func() {}, func(line, codeFileName string) {
 			line = strings.ToUpper(line)
 			fields := strings.Fields(line)
 			if len(fields) == 0 || isComment(fields[0]) {

@@ -15,144 +15,84 @@ import (
 
 func parseAllPkg(codeFiles []string) *viz.AllProcedure {
 	allP := viz.NewAllProcedure()
+	pkg := ""
+	doFiles(codeFiles, func() {
+		pkg = ""
+	}, func(line, codeFileName string) {
+		line = strings.ToUpper(line)
 
-	for _, codeFileName := range codeFiles {
-		codeFile, _ := os.Open(codeFileName)
-		scanner := bufio.NewScanner(codeFile)
-		scanner.Split(bufio.ScanLines)
-
-		pkg := ""
-		for scanner.Scan() {
-			line := scanner.Text()
-			line = strings.ToUpper(line)
-
-			if strings.Contains(line, "PKG_") && strings.Contains(line, "CREATE") {
-				tmp := strings.FieldsFunc(line, func(r rune) bool {
-					return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"'
-				})
-
-				for _, key := range tmp {
-					if strings.HasPrefix(key, "PKG_") {
-						pkg = key
-					}
-				}
-			}
-
-			if strings.Contains(line, "PROCEDURE") && strings.Contains(line, "P_") {
-				tmp := strings.FieldsFunc(line, func(r rune) bool {
-					return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"'
-				})
-
-				for _, key := range tmp {
-					if strings.HasPrefix(key, "P_") {
-						allP.Add(pkg, key)
-					}
-				}
-			}
+		if strings.Contains(line, "PKG_") && strings.Contains(line, "CREATE") {
+			doCreatePkg(line, func(s string) {
+				pkg = s
+			})
 		}
 
-		codeFile.Close()
-	}
+		if strings.Contains(line, "PROCEDURE") && strings.Contains(line, "P_") {
+			doCreateProcedure(line, func(s string) {
+				allP.Add(pkg, s)
+			})
+		}
+	})
+	procedure := ""
+	isComments := false
 
-	for _, codeFileName := range codeFiles {
-		codeFile, _ := os.Open(codeFileName)
-		scanner := bufio.NewScanner(codeFile)
-		scanner.Split(bufio.ScanLines)
-
-		pkg := ""
-		procedure := ""
-		isComments := false
-
-		for scanner.Scan() {
-			line := scanner.Text()
-			line = strings.ToUpper(line)
-			line = strings.Trim(line, " ")
-			if strings.HasPrefix(line, "/*") {
-				isComments = true
-			}
-
-			if strings.HasSuffix(line, "*/") || strings.HasSuffix(line, "*/;") {
-				isComments = false
-			}
-			if isComments {
-				continue
-			}
-			if strings.Contains(line, "PKG_") && strings.Contains(line, "CREATE") {
-				tmp := strings.FieldsFunc(line, func(r rune) bool {
-					return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"'
-				})
-
-				for _, key := range tmp {
-					if strings.HasPrefix(key, "PKG_") {
-						pkg = key
-					}
-				}
-			}
-
-			if strings.Contains(line, "PROCEDURE") && strings.Contains(line, "P_") {
-				tmp := strings.FieldsFunc(line, func(r rune) bool {
-					return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"'
-				})
-
-				for _, key := range tmp {
-					if strings.HasPrefix(key, "P_") {
-						procedure = key
-					}
-				}
-			}
-
-			if strings.HasPrefix(line, "--") {
-				continue
-			}
-
-			if strings.Contains(line, "PKG_") && strings.Contains(line, "(") {
-				tmp := strings.FieldsFunc(line, func(r rune) bool {
-					return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"' || r == ')'
-				})
-
-				for _, key := range tmp {
-					if strings.HasPrefix(key, "PKG_") {
-						sk := strings.Replace(key, "\"", "", -1)
-						spss := strings.Split(sk, ".")
-						if len(spss) > 1 && strings.Contains(pkg, "PKG_") {
-							sp := spss[1]
-							if strings.HasPrefix(sp, "P_") {
-								allP.AddCall(pkg, procedure, spss[0], spss[1])
-							}
-
-						}
-					}
-				}
-			}
-
-			if strings.Contains(line, "P_") && strings.Contains(line, "(") {
-				tmp := strings.FieldsFunc(line, func(r rune) bool {
-					return r == ' ' || r == '(' || r == ',' || r == '\'' || r == '"' || r == ')'
-				})
-
-				for _, key := range tmp {
-					if strings.HasPrefix(key, "P_") {
-						allP.AddCall(pkg, procedure, pkg, key)
-					}
-				}
-			}
-
-			if strings.Contains(line, " T_") || strings.Contains(line, ",T_") {
-				tmp := strings.FieldsFunc(line, func(r rune) bool {
-					return r == ' ' || r == ',' || r == '.' || r == '"' || r == ':' || r == '(' || r == ')' || r == '）' || r == '%' || r == '!' || r == '\''
-				})
-				for _, t3 := range tmp {
-					if strings.HasPrefix(t3, "T_") && !viz.IsChineseChar(t3) && !strings.Contains(t3, ";") && !strings.Contains(t3, "、") {
-						isWrite := strings.Contains(line, "INSERT ") || strings.Contains(line, "UPDATE ") || strings.Contains(line, "DELETE ")
-						allP.AddTable(pkg, procedure, t3, isWrite)
-					}
-
-				}
-			}
+	doFiles(codeFiles, func() {
+		pkg = ""
+		procedure = ""
+		isComments = false
+	}, func(line, codeFileName string) {
+		line = strings.ToUpper(line)
+		line = strings.Trim(line, " ")
+		if strings.HasPrefix(line, "/*") {
+			isComments = true
 		}
 
-		codeFile.Close()
-	}
+		if strings.HasSuffix(line, "*/") || strings.HasSuffix(line, "*/;") {
+			isComments = false
+		}
+
+		if isComments {
+			return
+		}
+
+		if strings.HasPrefix(line, "--") {
+			return
+		}
+
+		if strings.Contains(line, "PKG_") && strings.Contains(line, "CREATE") {
+			doCreatePkg(line, func(s string) {
+				pkg = s
+			})
+		}
+
+		if strings.Contains(line, "PROCEDURE") && strings.Contains(line, "P_") {
+			doCreateProcedure(line, func(s string) {
+				procedure = s
+			})
+		}
+
+		if strings.Contains(line, "PKG_") && strings.Contains(line, "(") {
+			doPkgLine(line, emptyFilter, func(p string, sp string) {
+				allP.AddCall(pkg, procedure, p, sp)
+			})
+		}
+
+		if strings.Contains(line, "P_") && strings.Contains(line, "(") {
+			doCreateProcedure(line, func(s string) {
+				allP.AddCall(pkg, procedure, pkg, s)
+			})
+		}
+
+		if strings.Contains(line, " T_") || strings.Contains(line, ",T_") {
+			doSplit(line, tableSplit, func(table string) {
+				if strings.HasPrefix(table, "T_") && !viz.IsChineseChar(table) && !strings.Contains(table, ";") && !strings.Contains(table, "、") {
+					isWrite := strings.Contains(line, "INSERT ") || strings.Contains(line, "UPDATE ") || strings.Contains(line, "DELETE ")
+					allP.AddTable(pkg, procedure, table, isWrite)
+				}
+			})
+		}
+	})
+
 	return allP
 }
 
