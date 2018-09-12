@@ -90,7 +90,7 @@ func printWhen(when sqlparser.Expr, currentQuery *viz.Query) {
 			currentQuery.AddColumn(fmt.Sprintf("%s.%s", tname, col))
 		}
 	case *sqlparser.NotExpr:
-		printWhen(when.Expr,currentQuery)
+		printWhen(when.Expr, currentQuery)
 	case *sqlparser.SQLVal:
 	case *sqlparser.BinaryExpr:
 	case sqlparser.ValTuple:

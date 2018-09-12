@@ -10,76 +10,33 @@ import (
 	"strings"
 )
 
-var pkgFilter func(line string) bool
-var tableFilter func(line string) bool
-var javaFilter func(line string) bool
-
 var javaDbCmd *cobra.Command = &cobra.Command{
 	Use:   "jd",
 	Short: "java code to database dependencies",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-
 		source := cmd.Flag("source").Value.String()
 		filterFile := cmd.Flag("filter").Value.String()
 		pkgFilterFile := cmd.Flag("package").Value.String()
 		tableFilterFile := cmd.Flag("table").Value.String()
 		commonTableFile := cmd.Flag("commonTable").Value.String()
-		pkgRegs := readFilterFile(pkgFilterFile)
-		tableRegs := readFilterFile(tableFilterFile)
-		commonTables := readFilterFile(commonTableFile)
-		javaRegs := readFilterFile(filterFile)
-		javaMatchRegs := make([]string, 0)
-		javaBlackRegs := make([]string, 0)
 
-		tableMatchRegs := make([]string, 0)
-		tableBlackRegs := make([]string, 0)
+		pf := viz.CreateRegexpFilter(pkgFilterFile)
+		tf := viz.CreateRegexpFilter(tableFilterFile).AddExcludes(commonTableFile)
+		jf := viz.CreateRegexpFilter(filterFile)
 
-		for _, reg := range javaRegs {
-			if strings.HasPrefix(reg, "- ") {
-				javaBlackRegs = append(javaBlackRegs, reg[2:])
-			}else {
-				javaMatchRegs = append(javaMatchRegs, reg)
-			}
-		}
-		for _, reg := range tableRegs {
-			if strings.HasPrefix(reg, "- ") {
-				tableBlackRegs = append(tableBlackRegs, reg[2:])
-			}else {
-				tableMatchRegs = append(tableMatchRegs, reg)
-			}
-		}
+		var pkgFilter func(line string) bool
+		var tableFilter func(line string) bool
+		var javaFilter func(line string) bool
+
 		if cmd.Flag("reverse").Value.String() == "false" {
-			pkgFilter = func(line string) bool {
-				return unMatchByRegexps(line, pkgRegs)
-			}
-			tableFilter = func(line string) bool {
-				for _, ct := range commonTables {
-					if ct == line {
-						return false
-					}
-				}
-				return unMatchByRegexps(line, tableRegs) && !matchByRegexps(line, tableBlackRegs)
-			}
-			javaFilter = func(line string) bool {
-				return matchByRegexps(line, javaMatchRegs) && !matchByRegexps(line, javaBlackRegs)
-			}
+			pkgFilter = pf.NotMatch
+			tableFilter = tf.UnMatch
+			javaFilter = jf.Match
 		} else {
-			pkgFilter = func(line string) bool {
-				return matchByRegexps(line, pkgRegs)
-			}
-			tableFilter = func(line string) bool {
-				for _, ct := range commonTables {
-					if ct == line {
-						return false
-					}
-				}
-				return matchByRegexps(line, tableRegs) && !matchByRegexps(line, tableBlackRegs)
-			}
-
-			javaFilter = func(line string) bool {
-				return !(matchByRegexps(line, javaMatchRegs) && !matchByRegexps(line, javaBlackRegs))
-			}
+			pkgFilter = pf.Match
+			tableFilter = tf.Match
+			javaFilter = jf.NotMatch
 		}
 
 		codeFiles := make([]string, 0)
@@ -174,8 +131,8 @@ var javaDbCmd *cobra.Command = &cobra.Command{
 
 		fmt.Println("")
 		fmt.Println("-----------")
-		for key,value := range tableCallerFiles {
-			fmt.Println(key + " -- " +  value)
+		for key, value := range tableCallerFiles {
+			fmt.Println(key + " -- " + value)
 
 		}
 	},

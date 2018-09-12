@@ -1,15 +1,15 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
+	"github.com/dlclark/regexp2"
+	"github.com/newlee/tequila/viz"
 	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
-	"strings"
-	"github.com/newlee/tequila/viz"
 	"sort"
-	"github.com/dlclark/regexp2"
-	"bufio"
+	"strings"
 )
 
 func readFilterFile(fileName string) []string {
@@ -20,13 +20,13 @@ func readFilterFile(fileName string) []string {
 	for scanner.Scan() {
 		line := scanner.Text()
 		if line != "" {
-			result = append(result, strings.Trim(line," "))
+			result = append(result, strings.Trim(line, " "))
 		}
 	}
 	return result
 }
 
-func matchByRegexps(name string, regexps []string) bool  {
+func matchByRegexps(name string, regexps []string) bool {
 	for _, reg := range regexps {
 		re, _ := regexp2.Compile(reg, 0)
 		if isMatch, _ := re.MatchString(name); isMatch {
@@ -36,7 +36,7 @@ func matchByRegexps(name string, regexps []string) bool  {
 	return false
 }
 
-func unMatchByRegexps(name string, regexps []string) bool  {
+func unMatchByRegexps(name string, regexps []string) bool {
 	for _, reg := range regexps {
 		re, _ := regexp2.Compile(reg, 0)
 		if isMatch, _ := re.MatchString(name); isMatch {
