@@ -17,15 +17,19 @@ var dbDepCmd *cobra.Command = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		//defer profile.Start().Stop()
 		source := cmd.Flag("source").Value.String()
-		filterFile := cmd.Flag("filter").Value.String()
+		pkgFilterFile := cmd.Flag("package").Value.String()
+		tableFilterFile := cmd.Flag("table").Value.String()
+		commonTableFile := cmd.Flag("commonTable").Value.String()
 
-		pf := viz.CreateRegexpFilter(filterFile)
+		pf := viz.CreateRegexpFilter(pkgFilterFile)
+		tf := viz.CreateRegexpFilter(tableFilterFile).AddExcludes(commonTableFile)
 
-		var match func(name string) bool
 		if cmd.Flag("reverse").Value.String() == "true" {
-			match = pf.NotMatch
+			pkgFilter = pf.NotMatch
+			tableFilter = tf.Match
 		} else {
-			match = pf.Match
+			pkgFilter = pf.Match
+			tableFilter = tf.UnMatch
 		}
 
 		codeFiles := make([]string, 0)
@@ -38,7 +42,7 @@ var dbDepCmd *cobra.Command = &cobra.Command{
 
 		ps := make([]*viz.Procedure, 0)
 		for name, p := range allP.Procedures {
-			if match(strings.Split(name, ".")[0]) {
+			if pkgFilter(strings.Split(name, ".")[0]) {
 				ps = append(ps, p)
 
 			}
@@ -50,7 +54,22 @@ var dbDepCmd *cobra.Command = &cobra.Command{
 		for _, p := range ps {
 			cs := make([]string, 0)
 			for cname := range p.CallProcedures {
-				if !match(strings.Split(cname, ".")[0]) {
+				if !pkgFilter(strings.Split(cname, ".")[0]) {
+					cs = append(cs, cname)
+				}
+			}
+			if len(cs) > 0 {
+				fmt.Println(p.FullName)
+				for _, cname := range cs {
+					fmt.Printf("  %s\n", cname)
+				}
+			}
+		}
+		fmt.Println("-----------")
+		for _, p := range ps {
+			cs := make([]string, 0)
+			for cname := range p.Tables {
+				if tableFilter(strings.Split(cname, ".")[0]) {
 					cs = append(cs, cname)
 				}
 			}
@@ -69,6 +88,8 @@ func init() {
 	rootCmd.AddCommand(dbDepCmd)
 
 	dbDepCmd.Flags().StringP("source", "s", "", "source code directory")
-	dbDepCmd.Flags().StringP("filter", "f", "pkg", "pkg regexp filter file")
+	dbDepCmd.Flags().StringP("table", "t", "table", "table filter file")
+	dbDepCmd.Flags().StringP("commonTable", "c", "table_common", "common table file")
+	dbDepCmd.Flags().StringP("package", "p", "pkg", "package filter file")
 	dbDepCmd.Flags().BoolP("reverse", "R", false, "reverse dep")
 }
