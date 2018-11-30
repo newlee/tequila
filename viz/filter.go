@@ -100,3 +100,26 @@ func (r *RegexpFilter) AddExcludes(fileName string) *RegexpFilter {
 	r.excludes = readFilterFile(fileName)
 	return r
 }
+
+type PrefixFilter struct {
+	whiteList []string
+}
+
+
+func CreatePrefixFilter(fileName string) *PrefixFilter {
+	pf := &PrefixFilter { whiteList: make([]string, 0)}
+	lines := readFilterFile(fileName)
+	for _, line := range lines {
+		pf.whiteList = append(pf.whiteList, line)
+	}
+	return pf
+}
+
+func (p *PrefixFilter) Match(s string) bool {
+	for _, prefix := range p.whiteList {
+		if strings.HasPrefix(s, prefix) {
+			return true
+		}
+	}
+	return false
+}

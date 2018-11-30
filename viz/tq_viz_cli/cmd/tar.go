@@ -104,6 +104,17 @@ var tarCmd *cobra.Command = &cobra.Command{
 		if cmd.Flag("mergePackage").Value.String() == "true" {
 			result = result.MergeHeaderFile(MergePackageFunc)
 		}
+		if cmd.Flag("java").Value.String() != "" && cmd.Flag("common").Value.String() != "" {
+			javaFilterFile := cmd.Flag("java").Value.String()
+			commonFilterFile := cmd.Flag("common").Value.String()
+			javaFilter := CreatePrefixFilter(javaFilterFile)
+
+			commonFilter := CreatePrefixFilter(commonFilterFile)
+			printRelation(result, javaFilter.Match, commonFilter.Match)
+			return
+
+		}
+
 		result.ToDot(cmd.Flag("output").Value.String(), ".", func(s string) bool {
 			return false
 		})
@@ -117,4 +128,6 @@ func init() {
 	tarCmd.Flags().StringP("source", "s", "", "source code directory")
 	tarCmd.Flags().StringP("filter", "f", "coll__graph.dot", "dot file filter")
 	tarCmd.Flags().StringP("output", "o", "dep.dot", "output dot file name")
+	tarCmd.Flags().StringP("java", "j", "", "java class filter")
+	tarCmd.Flags().StringP("common", "c", "", "common java class")
 }
