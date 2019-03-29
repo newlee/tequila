@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-var Level = 4
+var Level = 3
 
 type Package struct {
 	Name    string

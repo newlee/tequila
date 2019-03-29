@@ -25,8 +25,9 @@ var MergePackageFunc = func(input string) string {
 	if packageName == input {
 		packageName = "main"
 	}
-	if len(tmp) > 2 {
-		packageName = strings.Join(tmp[0:len(tmp)-1], split)
+
+	if len(tmp) > Level {
+		packageName = strings.Join(tmp[:(Level)], split)
 	}
 
 	return packageName
