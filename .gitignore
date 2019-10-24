@@ -25,6 +25,8 @@ tequila
 
 .DS_Store
 
+.vscode/
+xml/
 build/
 viz/merged.dot
 viz/merged.svg
