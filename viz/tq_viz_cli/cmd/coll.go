@@ -5,6 +5,7 @@ import (
 	"fmt"
 	. "github.com/newlee/tequila/viz"
 	"github.com/spf13/cobra"
+	"strconv"
 	"strings"
 )
 
@@ -19,6 +20,8 @@ var collCmd *cobra.Command = &cobra.Command{
 		result := ParseColl(source, filter)
 
 		if cmd.Flag("mergePackage").Value.String() == "true" {
+			Level, _ = strconv.Atoi(cmd.Flag("mergeLevel").Value.String())
+
 			result = result.MergeHeaderFile(MergePackageFunc)
 		}
 		if cmd.Flag("entryPoints").Value.String() == "true" {
@@ -71,15 +74,15 @@ func init() {
 	collCmd.Flags().BoolP("entryPoints", "E", false, "list entry points")
 	collCmd.Flags().BoolP("fanInFanOut", "F", false, "sorted fan-in and fan-out")
 	collCmd.Flags().BoolP("mergePackage", "P", false, "merge package/folder for include dependencies")
+	collCmd.Flags().Int32P("mergeLevel", "L", 3, "merge package/folder level")
 	collCmd.Flags().StringP("java", "j", "", "java class filter")
 	collCmd.Flags().StringP("common", "c", "", "common java class")
 
 }
 
+func printRelation(f *FullGraph, javaFilter func(string) bool, commonFilter func(string) bool) {
 
-func printRelation(f *FullGraph, javaFilter func(string)(bool), commonFilter func(string)(bool)){
-
-	class2other,other2class,class2common,other2common, common2 := make([]*Relation, 0),make([]*Relation, 0),make([]*Relation, 0),make([]*Relation, 0),make([]*Relation, 0)
+	class2other, other2class, class2common, other2common, common2 := make([]*Relation, 0), make([]*Relation, 0), make([]*Relation, 0), make([]*Relation, 0), make([]*Relation, 0)
 
 	var isOther = func(s string) bool {
 		return !javaFilter(s) && !commonFilter(s)
@@ -88,7 +91,7 @@ func printRelation(f *FullGraph, javaFilter func(string)(bool), commonFilter fun
 		if !strings.Contains(relation.To, ".") {
 			continue
 		}
-		if javaFilter(relation.From) && !javaFilter(relation.To)  {
+		if javaFilter(relation.From) && !javaFilter(relation.To) {
 			if commonFilter(relation.To) {
 				class2common = append(class2common, relation)
 			}
@@ -112,31 +115,31 @@ func printRelation(f *FullGraph, javaFilter func(string)(bool), commonFilter fun
 	}
 
 	fmt.Println("class2other:")
-	for _,r := range class2other {
+	for _, r := range class2other {
 		fmt.Printf("%s -> %s\n", r.From, r.To)
 	}
 	fmt.Println("-----------")
 	fmt.Println("")
 	fmt.Println("other2class:")
-	for _,r := range other2class {
+	for _, r := range other2class {
 		fmt.Printf("%s -> %s\n", r.From, r.To)
 	}
 	fmt.Println("-----------")
 	fmt.Println("")
 	fmt.Println("class2common:")
-	for _,r := range class2common {
+	for _, r := range class2common {
 		fmt.Printf("%s -> %s\n", r.From, r.To)
 	}
 	fmt.Println("-----------")
 	fmt.Println("")
 	fmt.Println("other2common:")
-	for _,r := range other2common {
+	for _, r := range other2common {
 		fmt.Printf("%s -> %s\n", r.From, r.To)
 	}
 	fmt.Println("-----------")
 	fmt.Println("")
 	fmt.Println("common2...:")
-	for _,r := range common2 {
+	for _, r := range common2 {
 		fmt.Printf("%s -> %s\n", r.From, r.To)
 	}
 	fmt.Println("-----------")
